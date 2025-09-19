@@ -4,7 +4,8 @@
 
 enum class GraphRepresentation {
     ADJACENCY_LIST,
-    ADJACENCY_MATRIX
+    ADJACENCY_MATRIX,
+    ADJACENCY_VECTOR
 };
 
 class IGraph {
@@ -21,5 +22,9 @@ public:
      * Este mÈtodo È concreto e usa os mÈtodos virtuais acima.
      * @param outputFilePath O caminho para o arquivo de relatÛrio a ser gerado.
     */
+
+    // Para estruturas que precisam ‚Äúfechar‚Äù a constru√ß√£o (CSR). Lista/Matriz n√£o precisam mexer.
+    virtual void finalize() {}
+
     void generateReport(const std::string& outputFilePath) const;
 };

@@ -6,7 +6,13 @@
 
 // Função auxiliar para executar e medir o tempo
 void processGraph(const std::string& inputFile, GraphRepresentation type) {
-    std::string typeStr = (type == GraphRepresentation::ADJACENCY_LIST) ? "Lista" : "Matriz";
+        std::string typeStr;
+        switch (type) {
+        case GraphRepresentation::ADJACENCY_LIST:   typeStr = "Lista";  break;
+        case GraphRepresentation::ADJACENCY_MATRIX: typeStr = "Matriz"; break;
+        case GraphRepresentation::ADJACENCY_VECTOR: typeStr = "Vector"; break;
+        }
+
     std::cout << "Processando com representacao de " << typeStr << "..." << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -29,14 +35,17 @@ void processGraph(const std::string& inputFile, GraphRepresentation type) {
 }
 
 int main() {
-    std::string filename = "grafo_3.txt"; // <-- COLOQUE O NOME DO SEU ARQUIVO AQUI
+    std::string filename = "grafo_2.txt"; // <-- COLOQUE O NOME DO SEU ARQUIVO AQUI
 
     std::cout << "Iniciando analise do arquivo: " << filename << std::endl << std::endl;
 
     // Processa usando Lista de Adjacência
-    processGraph(filename, GraphRepresentation::ADJACENCY_LIST);
+   // processGraph(filename, GraphRepresentation::ADJACENCY_LIST);
 
-    // Processa usando Matriz de Adjacência
+    // Processa usando Vetor (CSR)
+    processGraph(filename, GraphRepresentation::ADJACENCY_VECTOR); //performa melhor na prática por ser contíguo em memória
+
+     // Processa usando Matriz de Adjacência
     // AVISO: A linha abaixo pode consumir muita memória e ser extremamente lenta!
     // processGraph(filename, GraphRepresentation::ADJACENCY_MATRIX);
 
