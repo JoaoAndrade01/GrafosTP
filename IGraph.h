@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <functional>
 
 enum class GraphRepresentation {
     ADJACENCY_LIST,
@@ -16,8 +17,11 @@ public:
     virtual int getNumVertices() const = 0;
     virtual int getNumEdges() const = 0;
     virtual int getDegree(int vertex) const = 0;
+    virtual void forEachNeighbor(int u,const std::function<void(int)>& fn) const = 0; 
 
-    /**
+
+
+   /**
      * @brief Calcula métricas do grafo e salva em um arquivo de saída.
      * Este método é concreto e usa os métodos virtuais acima.
      * @param outputFilePath O caminho para o arquivo de relatório a ser gerado.

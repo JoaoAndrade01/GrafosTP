@@ -2,26 +2,30 @@
 #include "IGraph.h"
 #include <vector>
 #include <utility>
+#include <functional>
 
 class AdjacencyVectorGraph : public IGraph {
 public:
     explicit AdjacencyVectorGraph(int numVertices);
 
-    void addEdge(int u, int v) override;   // recebe 1..n
-    void finalize() override;              // monta CSR
-    int  getNumVertices() const override { return numVertices; }
-    int  getNumEdges()   const override { return numEdges; }
-    int  getDegree(int vertex) const override;
+    void addEdge(int u, int v) override;
+    void finalize() override;
+    int getNumVertices() const override { return numVertices; }
+    int getNumEdges() const override { return numEdges; }
+    int getDegree(int vertex) const override;
+
+    // Novo: percorre vizinhos no CSR
+    void forEachNeighbor(int u, const std::function<void(int)>& fn) const override;
 
 private:
     int numVertices;
-    int numEdges; // conta cada aresta uma vez (não-dirigido)
+    int numEdges;
 
-    // CSR (1-based): offsets tem tamanho numVertices+1 e usamos [1..n]
-    std::vector<int> offsets;   // offsets[i] início da lista de i; offsets[i+1]-offsets[i] = grau(i)
-    std::vector<int> nbrs;      // vizinhos concatenados (2*numEdges)
+    // Estrutura CSR
+    std::vector<int> offsets;
+    std::vector<int> nbrs;
 
-    // buffers para construção
-    std::vector<int> deg;                      // graus 1..n
-    std::vector<std::pair<int,int>> edges;     // guarda (u,v) até finalizar
+    // Buffers para construção
+    std::vector<int> deg;
+    std::vector<std::pair<int,int>> edges;
 };

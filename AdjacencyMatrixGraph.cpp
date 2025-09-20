@@ -32,3 +32,11 @@ int AdjacencyMatrixGraph::getDegree(int vertex) const {
     }
     throw std::out_of_range("Vertice invalido.");
 }
+
+void AdjacencyMatrixGraph::forEachNeighbor(
+        int u, const std::function<void(int)>& fn) const {
+    if (u <= 0 || u > numVertices) return;
+    // Inevitável: O(N) por linha
+    for (int v = 1; v <= numVertices; ++v)
+        if (matrix[u][v]) fn(v);
+}

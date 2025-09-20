@@ -1,44 +1,73 @@
 #include "GraphFactory.h"
 #include "AdjacencyListGraph.h"
 #include "AdjacencyMatrixGraph.h"
-#include "AdjacencyVectorGraph.h"   // << meu teste de  vetor adjacente
+#include "AdjacencyVectorGraph.h"
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <vector>
+#include <chrono>
+
+BuildStats GraphFactory::s_stats{};
 
 std::unique_ptr<IGraph> GraphFactory::createGraphFromFile(
     const std::string& filePath,
     GraphRepresentation type
-){
-    std::ifstream inputFile(filePath);
-    if (!inputFile.is_open()) {
-        std::cerr << "Erro: Nao foi possivel abrir o arquivo " << filePath << std::endl;
+) {
+    using relogio = std::chrono::high_resolution_clock;
+
+    // Abre arquivo
+    std::ifstream in(filePath);
+    if (!in.is_open()) {
+        std::cerr << "Erro: nao foi possivel abrir o arquivo '" << filePath << "'.\n";
         return nullptr;
     }
 
-    int numVertices = 0;
-    inputFile >> numVertices; // primeira linha do arquivo: numero de vertices (1..n)
-
-    // Cria o tipo correto de grafo baseado na escolha do usuario
-    std::unique_ptr<IGraph> graph;
-    if (type == GraphRepresentation::ADJACENCY_LIST) {
-        graph = std::make_unique<AdjacencyListGraph>(numVertices);
-    } else if (type == GraphRepresentation::ADJACENCY_MATRIX) {
-        graph = std::make_unique<AdjacencyMatrixGraph>(numVertices);
-    } else { // GraphRepresentation::ADJACENCY_VECTOR (CSR)
-        graph = std::make_unique<AdjacencyVectorGraph>(numVertices);
+    // Lê número de vértices
+    int n = 0;
+    if (!(in >> n) || n <= 0) {
+        std::cerr << "Erro: primeira linha deve conter o numero de vertices (>0).\n";
+        return nullptr;
     }
 
-    // Le as arestas restantes (formato: u v), mantendo 1-based como no resto do projeto
+    // Lê todas as arestas em memória (NÃO conta tempo)
+    std::vector<std::pair<int,int>> arestas;
     int u, v;
-    while (inputFile >> u >> v) {
-        graph->addEdge(u, v);
+    while (in >> u >> v) {
+        arestas.emplace_back(u, v);
     }
-    inputFile.close();
+    in.close();
 
-    // Fecha a construcao (CSR usa para montar offsets/nbrs; lista/matriz ignoram)
-    graph->finalize();
+    // Começa a medir tempo só da CONSTRUÇÃO
+    auto t0 = relogio::now();
 
-    return graph;
+    std::unique_ptr<IGraph> g;
+    switch (type) {
+        case GraphRepresentation::ADJACENCY_LIST:
+            g = std::make_unique<AdjacencyListGraph>(n);
+            break;
+        case GraphRepresentation::ADJACENCY_MATRIX:
+            g = std::make_unique<AdjacencyMatrixGraph>(n);
+            break;
+        case GraphRepresentation::ADJACENCY_VECTOR:
+        default:
+            g = std::make_unique<AdjacencyVectorGraph>(n);
+            break;
+    }
+
+    for (auto &e : arestas) {
+        g->addEdge(e.first, e.second);
+    }
+
+    // Finaliza (CSR precisa)
+    g->finalize();
+
+    auto t1 = relogio::now();
+    s_stats.tempoConstrucaoSeg = std::chrono::duration<double>(t1 - t0).count();
+
+    return g;
+}
+
+BuildStats GraphFactory::getLastBuildStats() {
+    return s_stats;
 }
 
