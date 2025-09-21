@@ -6,9 +6,6 @@
  * @date 20 de Setembro de 2025
  */
 
-#ifndef GRAFO_H
-#define GRAFO_H
-
 #include <string>
 #include <vector>
 #include <memory> // Necessário para std::unique_ptr
@@ -27,7 +24,9 @@ class Representacao;
 enum class TipoRepresentacao {
     MATRIZ_ADJACENCIA, ///< Representar o grafo usando uma matriz de adjacência.
     LISTA_ADJACENCIA,   ///< Representar o grafo usando uma lista de adjacência.
-    VETOR_ADJACENCIA
+    MATRIZ_ADJACENCIA_TRIANGULAR,
+	LISTA_ADJACENCIA_SIMPLES
+
 };
 
 /**
@@ -105,5 +104,3 @@ private:
     int numeroDeVertices;
     int numeroDeArestas;
 };
-
-#endif // GRAFO_H
