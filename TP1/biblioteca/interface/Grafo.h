@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <memory> // Necessário para std::unique_ptr
+#include "../algoritmos/BFS.h" 
 
  // Declaração antecipada (forward declaration) da classe de representação.
  // Isso evita a necessidade de incluir o cabeçalho completo da representação aqui,
@@ -82,6 +83,15 @@ public:
      * @return Um std::vector<int> contendo os índices dos vértices vizinhos.
      */
     std::vector<int> obterVizinhos(int vertice) const;
+
+    ResultadoBFS executarBFS(int verticeOrigem) const;
+
+    /**
+     * @brief Salva a árvore de busca gerada pelo BFS em um arquivo de texto.
+     * @param resultado O struct ResultadoBFS retornado pelo método executarBFS.
+     * @param caminhoArquivo O nome do arquivo onde a árvore será salva (ex: "resultado.txt").
+     */
+    void salvarArvoreBusca(const ResultadoBFS& resultado, const std::string& caminhoArquivo) const;
 
 
     // --- Futuros Métodos para Algoritmos e Relatórios ---

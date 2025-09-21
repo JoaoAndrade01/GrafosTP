@@ -104,3 +104,68 @@ std::vector<int> Grafo::obterVizinhos(int vertice) const {
     // Delega a chamada para o objeto de representação
     return representacaoInterna->obterVizinhos(vertice);
 }
+
+/**
+ * @brief Executa a Busca em Largura (BFS) a partir de um vértice de origem.
+ * @details Este método atua como uma fachada (Facade). Ele instancia a classe
+ * especialista em BFS e delega a execução para ela, passando uma referência
+ * a si mesmo (*this).
+ */
+ResultadoBFS Grafo::executarBFS(int verticeOrigem) const {
+    // 1. Cria uma instância do nosso "trabalhador" de BFS.
+    BFS algoritmoBFS;
+
+    // 2. Chama o método 'executar' do trabalhador, passando o próprio
+    // objeto Grafo atual (*this) como parâmetro, e retorna o resultado.
+    return algoritmoBFS.executar(*this, verticeOrigem);
+}
+
+/**
+ * @brief Salva a árvore de busca (pai e nível de cada vértice) em um arquivo,
+ * ORDENADA POR NÍVEL.
+ * @details Coleta os dados de pai e nível para todos os vértices, ordena esses
+ * dados com base no nível (e depois por ID, como critério de desempate), e
+ * então escreve o resultado ordenado no arquivo.
+ */
+void Grafo::salvarArvoreBusca(const ResultadoBFS& resultado, const std::string& caminhoArquivo) const {
+    // Bloco 1: Abertura e verificação do arquivo
+    std::ofstream arquivo(caminhoArquivo);
+    if (!arquivo.is_open()) {
+        throw std::runtime_error("Nao foi possivel abrir o arquivo de saida: " + caminhoArquivo);
+    }
+
+    // Bloco 2: Coleta dos dados em uma estrutura temporária
+    // Isso é necessário para que possamos ordenar antes de escrever.
+    struct InfoVertice {
+        int id;
+        int pai;
+        int nivel;
+    };
+    std::vector<InfoVertice> verticesParaOrdenar;
+    // Percorre todos os vértices do grafo
+    for (int v = 1; v <= this->numeroDeVertices; ++v) {
+        // Adiciona à lista apenas os vértices que foram alcançados pela busca
+        if (resultado.nivel[v] != -1) {
+            verticesParaOrdenar.push_back({ v, resultado.pai[v], resultado.nivel[v] });
+        }
+    }
+
+    // Bloco 3: Ordenação do vetor temporário
+    // Usamos std::sort com uma expressão lambda para definir nossa regra de ordenação.
+    std::sort(verticesParaOrdenar.begin(), verticesParaOrdenar.end(),
+        [](const InfoVertice& a, const InfoVertice& b) {
+            // Regra 1: O critério principal é o nível.
+            if (a.nivel != b.nivel) {
+                return a.nivel < b.nivel; // Ordena por nível ascendente.
+            }
+            // Regra 2: Se os níveis forem iguais, usamos o ID do vértice como desempate.
+            return a.id < b.id;
+        }
+    );
+
+    // Bloco 4: Escrita dos dados já ordenados no arquivo
+    arquivo << "Vertice,Pai,Nivel\n"; // Escreve o cabeçalho
+    for (const auto& info : verticesParaOrdenar) {
+        arquivo << info.id << "," << info.pai << "," << info.nivel << "\n";
+    }
+}

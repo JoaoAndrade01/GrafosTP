@@ -12,7 +12,7 @@ endif()
 project ("TP1")
 
 # Adicione a origem ao executável deste projeto.
-add_executable (TP1   "biblioteca/interface/Grafo.h" "biblioteca/representacao/representacao.h" "biblioteca/representacao/MatrizAdjacencia.h" "biblioteca/representacao/MatrizAdjacencia.cpp" "biblioteca/interface/Grafo.cpp" "estudos/1_comparacao_memoria/main.cpp" "biblioteca/representacao/ListaAdjacencia.h" "biblioteca/representacao/ListaAdjacencia.cpp" "biblioteca/representacao/MatrizAdjacenciaTriangular.h" "biblioteca/representacao/MatrizAdjacenciaTriangular.cpp" "biblioteca/representacao/ListaAdjacenciaSimples.h" "biblioteca/representacao/ListaAdjacenciaSimples.cpp")
+add_executable (TP1   "biblioteca/interface/Grafo.h" "biblioteca/representacao/representacao.h" "biblioteca/representacao/MatrizAdjacencia.h" "biblioteca/representacao/MatrizAdjacencia.cpp" "biblioteca/interface/Grafo.cpp" "biblioteca/representacao/ListaAdjacencia.h" "biblioteca/representacao/ListaAdjacencia.cpp" "biblioteca/representacao/MatrizAdjacenciaTriangular.h" "biblioteca/representacao/MatrizAdjacenciaTriangular.cpp" "biblioteca/representacao/ListaAdjacenciaSimples.h" "biblioteca/representacao/ListaAdjacenciaSimples.cpp" "biblioteca/algoritmos/BFS.cpp" "estudos/2_BFS/main.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET TP1 PROPERTY CXX_STANDARD 20)
