@@ -32,6 +32,15 @@ enum class TipoRepresentacao {
 };
 
 /**
+ * @struct ComponenteConexa
+ * @brief Armazena os dados de uma única componente conexa.
+ */
+struct ComponenteConexa {
+    int tamanho = 0; // Quantidade de vértices na componente
+    std::vector<int> vertices; // Lista de vértices que pertencem a esta componente
+};
+
+/**
  * @class Grafo
  * @brief Classe principal que representa um grafo e serve como a API pública da biblioteca.
  * @details Esta classe abstrai a representação interna do grafo (matriz, lista ou vetor)
@@ -120,6 +129,31 @@ public:
      */
     int calcularDistancia(int verticeU, int verticeV) const;
 
+    /**
+     * @brief Calcula o diâmetro EXATO do grafo. CUIDADO: muito lento para grafos grandes.
+     * @details Algoritmo de força bruta que executa um BFS a partir de cada vértice.
+     * A complexidade é O(V * (V+E)).
+     * @return O diâmetro do grafo, ou -1 se o grafo for desconexo.
+     */
+    int calcularDiametro() const;
+
+    /**
+     * @brief Estima o diâmetro do grafo com uma heurística rápida.
+     * @details Executa a heurística "duplo-BFS" um número de vezes para encontrar
+     * um valor aproximado (limite inferior) para o diâmetro.
+     * @param iteracoes O número de vezes que a heurística será executada (default = 5).
+     * @return O diâmetro aproximado do grafo.
+     */
+    int calcularDiametroAproximado(int iteracoes = 5) const;
+
+    /**
+     * @brief Encontra todas as componentes conexas do grafo.
+     * @details Utiliza um algoritmo de busca (BFS) para encontrar todos os subgrafos
+     * em que qualquer vértice é alcançável a partir de qualquer outro.
+     * @return Um vetor de structs ComponenteConexa, já ordenado por tamanho
+     * em ordem decrescente.
+     */
+    std::vector<ComponenteConexa> encontrarComponentesConexas() const;
 
 private:
     // Ponteiro inteligente para a implementação da representação do grafo.

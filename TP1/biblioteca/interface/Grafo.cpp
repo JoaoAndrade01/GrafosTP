@@ -12,8 +12,10 @@
 #include <fstream>   // Para leitura de arquivos (ifstream)
 #include <stdexcept> // Para lançar exceções (runtime_error)
 #include <iostream>  // Para mensagens de depuração (opcional)
+#include <vector>
+#include <random>
 
-/**
+ /**
  * @brief Construtor da classe Grafo.
  */
 Grafo::Grafo(const std::string& caminhoArquivo, TipoRepresentacao tipo) {
@@ -246,4 +248,130 @@ int Grafo::calcularDistancia(int verticeU, int verticeV) const {
     // Se o vértice 'v' for inalcançável, seu nível já será -1, que é o
     // valor correto a ser retornado.
     return resultadoBFS.nivel[verticeV];
+}
+
+/**
+ * @brief Implementação do cálculo de diâmetro EXATO.
+ */
+int Grafo::calcularDiametro() const {
+    int diametroGeral = 0;
+
+    // Itera por cada vértice, tratando-o como uma possível origem de um BFS.
+    for (int v_origem = 1; v_origem <= this->numeroDeVertices; ++v_origem) {
+        // Roda um BFS completo a partir do vértice atual.
+        ResultadoBFS resultado = this->executarBFS(v_origem);
+        int excentricidadeLocal = 0;
+
+        // Encontra a maior distância (excentricidade) a partir de v_origem.
+        for (int v_destino = 1; v_destino <= this->numeroDeVertices; ++v_destino) {
+            // Se encontrarmos um vértice inalcançável (-1), o grafo é desconexo.
+            // O diâmetro de um grafo desconexo é considerado infinito. Retornamos -1.
+            if (resultado.nivel[v_destino] == -1) {
+                return -1;
+            }
+            excentricidadeLocal = std::max(excentricidadeLocal, resultado.nivel[v_destino]);
+        }
+        // Atualiza o diâmetro geral com a maior excentricidade encontrada até agora.
+        diametroGeral = std::max(diametroGeral, excentricidadeLocal);
+    }
+    return diametroGeral;
+}
+
+/**
+ * @brief Implementação do cálculo de diâmetro APROXIMADO.
+ */
+int Grafo::calcularDiametroAproximado(int iteracoes) const {
+    int diametroAproximado = 0;
+    if (this->numeroDeVertices == 0) return 0;
+
+    // Configura o gerador de números aleatórios.
+    std::random_device rd;
+    // Substitua std::mt19337 por std::mt19937 (correto para o gerador Mersenne Twister)
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, this->numeroDeVertices);
+
+    // Repete a heurística 'iteracoes' vezes para aumentar a qualidade da aproximação.
+    for (int i = 0; i < iteracoes; ++i) {
+        // Passo 1: Escolha um vértice de partida aleatório 's'.
+        int s = distrib(gen);
+
+        // Passo 2: Rode um BFS de 's' e encontre o vértice 'u' mais distante.
+        ResultadoBFS res1 = this->executarBFS(s);
+        int maxNivel1 = -1;
+        int u = s;
+        for (int v = 1; v <= this->numeroDeVertices; ++v) {
+            if (res1.nivel[v] > maxNivel1) {
+                maxNivel1 = res1.nivel[v];
+                u = v;
+            }
+        }
+
+        // Passo 3: Rode um BFS de 'u' e encontre a maior distância a partir dele.
+        ResultadoBFS res2 = this->executarBFS(u);
+        int maxNivel2 = -1;
+        for (int v = 1; v <= this->numeroDeVertices; ++v) {
+            if (res2.nivel[v] > maxNivel2) {
+                maxNivel2 = res2.nivel[v];
+            }
+        }
+
+        // Passo 4: A maior distância encontrada (maxNivel2) é uma aproximação.
+        // Atualizamos nosso máximo com o resultado desta iteração.
+        diametroAproximado = std::max(diametroAproximado, maxNivel2);
+    }
+
+    return diametroAproximado;
+}
+
+/**
+ * @brief Implementação do algoritmo para encontrar componentes conexas,
+ * REUTILIZANDO o método executarBFS.
+ */
+std::vector<ComponenteConexa> Grafo::encontrarComponentesConexas() const {
+    // Bloco 1: Preparação
+    std::vector<ComponenteConexa> todasAsComponentes;
+    std::vector<bool> visitado(this->numeroDeVertices + 1, false);
+
+    // Bloco 2: Loop principal para encontrar os pontos de partida das componentes
+    // Itera por todos os vértices do grafo para garantir que nenhuma componente seja esquecida.
+    for (int v_inicial = 1; v_inicial <= this->numeroDeVertices; ++v_inicial) {
+
+        // Se o vértice atual ainda não foi visitado, ele pertence a uma nova componente.
+        if (!visitado[v_inicial]) {
+
+            // Bloco 3: REUTILIZAÇÃO do BFS que já implementamos!
+            // Em vez de reescrever a lógica da fila aqui, simplesmente chamamos o método principal.
+            // O resultado conterá todos os vértices alcançáveis a partir de 'v_inicial'.
+            ResultadoBFS resultadoParcial = this->executarBFS(v_inicial);
+
+            // Bloco 4: Processamento do resultado do BFS
+            // Agora, iteramos pelos resultados para construir a componente
+            // e marcar todos os seus membros como visitados.
+            ComponenteConexa novaComponente;
+            for (int v_componente = 1; v_componente <= this->numeroDeVertices; ++v_componente) {
+                // Se o vértice 'v_componente' foi alcançado nesta busca (tem um pai ou é a própria origem)...
+                if (resultadoParcial.pai[v_componente] != -1 || v_componente == v_inicial) {
+                    novaComponente.vertices.push_back(v_componente);
+                    // CRUCIAL: Marcamos o vértice como visitado no controle do loop principal
+                    // para não iniciarmos uma nova busca para um vértice que já pertence a esta componente.
+                    visitado[v_componente] = true;
+                }
+            }
+
+            // Adiciona a componente completa à lista de resultados.
+            if (!novaComponente.vertices.empty()) {
+                novaComponente.tamanho = novaComponente.vertices.size();
+                todasAsComponentes.push_back(novaComponente);
+            }
+        }
+    }
+
+    // Bloco 5: Ordenação das componentes (lógica inalterada)
+    std::sort(todasAsComponentes.begin(), todasAsComponentes.end(),
+        [](const ComponenteConexa& a, const ComponenteConexa& b) {
+            return a.tamanho > b.tamanho;
+        }
+    );
+
+    return todasAsComponentes;
 }
