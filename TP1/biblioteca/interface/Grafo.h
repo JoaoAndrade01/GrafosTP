@@ -10,6 +10,7 @@
 #include <vector>
 #include <memory> // Necessário para std::unique_ptr
 #include "../algoritmos/BFS.h" 
+#include "../algoritmos/DFS.h" 
 
  // Declaração antecipada (forward declaration) da classe de representação.
  // Isso evita a necessidade de incluir o cabeçalho completo da representação aqui,
@@ -85,6 +86,8 @@ public:
     std::vector<int> obterVizinhos(int vertice) const;
 
     ResultadoBFS executarBFS(int verticeOrigem) const;
+
+    ResultadoDFS executarDFS(int verticeOrigem) const;
 
     /**
      * @brief Salva a árvore de busca gerada pelo BFS em um arquivo de texto.

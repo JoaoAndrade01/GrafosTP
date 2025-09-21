@@ -121,6 +121,15 @@ ResultadoBFS Grafo::executarBFS(int verticeOrigem) const {
 }
 
 /**
+ * @brief Executa a Busca em Profundidade (DFS) a partir de um vértice de origem.
+ * @details Atua como uma fachada, delegando a execução para a classe especialista 'DFS'.
+ */
+ResultadoDFS Grafo::executarDFS(int verticeOrigem) const {
+    DFS algoritmoDFS;
+    return algoritmoDFS.executar(*this, verticeOrigem);
+}
+
+/**
  * @brief Salva a árvore de busca (pai e nível de cada vértice) em um arquivo,
  * ORDENADA POR NÍVEL.
  * @details Coleta os dados de pai e nível para todos os vértices, ordena esses
