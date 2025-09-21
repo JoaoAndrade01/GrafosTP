@@ -178,3 +178,72 @@ void Grafo::salvarArvoreBusca(const ResultadoBFS& resultado, const std::string& 
         arquivo << info.id << "," << info.pai << "," << info.nivel << "\n";
     }
 }
+
+void Grafo::salvarArvoreBusca(const ResultadoDFS& resultado, const std::string& caminhoArquivo) const {
+    // Bloco 1: Abertura e verificação do arquivo
+    std::ofstream arquivo(caminhoArquivo);
+    if (!arquivo.is_open()) {
+        throw std::runtime_error("Nao foi possivel abrir o arquivo de saida: " + caminhoArquivo);
+    }
+
+    // Bloco 2: Coleta dos dados em uma estrutura temporária
+    // Isso é necessário para que possamos ordenar antes de escrever.
+    struct InfoVertice {
+        int id;
+        int pai;
+        int nivel;
+    };
+    std::vector<InfoVertice> verticesParaOrdenar;
+    // Percorre todos os vértices do grafo
+    for (int v = 1; v <= this->numeroDeVertices; ++v) {
+        // Adiciona à lista apenas os vértices que foram alcançados pela busca
+        if (resultado.nivel[v] != -1) {
+            verticesParaOrdenar.push_back({ v, resultado.pai[v], resultado.nivel[v] });
+        }
+    }
+
+    // Bloco 3: Ordenação do vetor temporário
+    // Usamos std::sort com uma expressão lambda para definir nossa regra de ordenação.
+    std::sort(verticesParaOrdenar.begin(), verticesParaOrdenar.end(),
+        [](const InfoVertice& a, const InfoVertice& b) {
+            // Regra 1: O critério principal é o nível.
+            if (a.nivel != b.nivel) {
+                return a.nivel < b.nivel; // Ordena por nível ascendente.
+            }
+            // Regra 2: Se os níveis forem iguais, usamos o ID do vértice como desempate.
+            return a.id < b.id;
+        }
+    );
+
+    // Bloco 4: Escrita dos dados já ordenados no arquivo
+    arquivo << "Vertice,Pai,Nivel\n"; // Escreve o cabeçalho
+    for (const auto& info : verticesParaOrdenar) {
+        arquivo << info.id << "," << info.pai << "," << info.nivel << "\n";
+    }
+}
+
+/**
+ * @brief Implementação do cálculo de distância.
+ */
+int Grafo::calcularDistancia(int verticeU, int verticeV) const {
+    // Bloco 1: Validação dos vértices (boa prática)
+    if (verticeU <= 0 || verticeU > this->numeroDeVertices || verticeV <= 0 || verticeV > this->numeroDeVertices) {
+        throw std::out_of_range("Vértice(s) inválido(s) fornecido(s) para calcularDistancia.");
+    }
+
+    // A distância de um vértice para ele mesmo é 0.
+    if (verticeU == verticeV) {
+        return 0;
+    }
+
+    // Bloco 2: Execução do BFS a partir da origem 'u'
+    // Delegamos todo o trabalho pesado para o método que já temos.
+    ResultadoBFS resultadoBFS = this->executarBFS(verticeU);
+
+    // Bloco 3: Retorno do resultado
+    // A propriedade fundamental do BFS é que o vetor 'nivel' contém a menor
+    // distância da origem para todos os outros vértices.
+    // Se o vértice 'v' for inalcançável, seu nível já será -1, que é o
+    // valor correto a ser retornado.
+    return resultadoBFS.nivel[verticeV];
+}

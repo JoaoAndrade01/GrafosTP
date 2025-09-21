@@ -95,7 +95,12 @@ public:
      * @param caminhoArquivo O nome do arquivo onde a árvore será salva (ex: "resultado.txt").
      */
     void salvarArvoreBusca(const ResultadoBFS& resultado, const std::string& caminhoArquivo) const;
-
+    /**
+  * @brief Salva a árvore de busca gerada pelo DFS em um arquivo de texto.
+  * @param resultado O struct ResultadoBFS retornado pelo método executarBFS.
+  * @param caminhoArquivo O nome do arquivo onde a árvore será salva (ex: "resultado.txt").
+  */
+    void salvarArvoreBusca(const ResultadoDFS& resultado, const std::string& caminhoArquivo) const;
 
     // --- Futuros Métodos para Algoritmos e Relatórios ---
     // (Serão implementados nos próximos passos)
@@ -103,6 +108,17 @@ public:
     // void gerarRelatorioCompleto(const std::string& arquivoSaida) const;
     // ResultadoBusca executarBFS(int verticeInicial) const;
     // ... etc ...
+
+    /**
+     * @brief Calcula a distancia (menor caminho em arestas) entre dois vertices.
+     * @details Utiliza o algoritmo BFS, cuja propriedade fundamental é encontrar os
+     * menores caminhos em grafos não ponderados.
+     * @param verticeU O vertice de origem.
+     * @param verticeV O vertice de destino.
+     * @return O número de arestas no caminho mais curto. Retorna 0 se u == v.
+     * Retorna -1 se v for inalcançável a partir de u.
+     */
+    int calcularDistancia(int verticeU, int verticeV) const;
 
 
 private:
@@ -117,3 +133,4 @@ private:
     int numeroDeVertices;
     int numeroDeArestas;
 };
+
