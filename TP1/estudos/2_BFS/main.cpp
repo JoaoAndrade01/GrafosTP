@@ -1,142 +1,179 @@
 /**
  * @file main.cpp
- * @brief Programa final para executar os testes e responder às perguntas do trabalho.
+ * @brief Programa final de benchmark, com coleta de estatísticas detalhadas.
  */
-
 #include <iostream>
 #include <string>
 #include <vector>
-#include <limits>
+#include <chrono>
+#include <random>
+#include <fstream>
 #include <stdexcept>
+#include <iomanip>
+#include <numeric>   // Para std::accumulate
+#include <algorithm> // Para std::min_element, std::max_element
+#include <cmath>     // Para std::sqrt (raiz quadrada)
 
 #include "../../biblioteca/interface/Grafo.h"
+#include "../../biblioteca/algoritmos/BFS.h"
+#include "../../biblioteca/algoritmos/DFS.h"
 
- // --- Protótipos das Funções ---
-void executarEstudoDeCasoFinal();
-void pausarParaContinuar();
+ // ===================================================================
+ // ================== VARIÁVEL DE CONTROLE PRINCIPAL ==================
+ // ===================================================================
+ // Mude este valor para 1 para um teste rápido de validação/estimativa.
+ // Mude para 100 para o benchmark completo do estudo de caso.
+const int NUM_EXECUCOES_POR_AMOSTRA = 100;
+// ===================================================================
 
-// Função principal simples que chama o menu do estudo de caso
+// Estrutura para definir uma tarefa de benchmark
+struct TarefaBenchmark {
+    std::string nomeGrafo;
+    TipoRepresentacao tipoRepr;
+    std::string nomeRepr;
+};
+
+// Estrutura para guardar o resultado de uma amostra (com mais métricas)
+struct ResultadoAmostra {
+    double tempoTotalMs = 0.0;
+    double tempoMedioMs = 0.0;
+    double tempoMinMs = 0.0;
+    double tempoMaxMs = 0.0;
+    double desvioPadraoMs = 0.0;
+};
+
+// --- Protótipos ---
+ResultadoAmostra executarAmostra(const Grafo& grafo, const std::string& algoritmo, int numExecucoes);
+
 int main() {
-    executarEstudoDeCasoFinal();
+    std::cout << "--- Benchmark de Performance (com Estatisticas Detalhadas) ---" << std::endl;
+    std::cout << "Configurado para executar " << NUM_EXECUCOES_POR_AMOSTRA << " buscas por amostra." << std::endl;
+
+    // Confirmação do usuário para iniciar
+    char continuar;
+    std::cout << "\nDeseja iniciar o benchmark? (s/n): ";
+    std::cin >> continuar;
+    if (continuar != 's' && continuar != 'S') {
+        std::cout << "Benchmark cancelado." << std::endl;
+        return 0;
+    }
+
+    // --- Lógica de Execução ---
+    std::string caminhoBase = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/";
+    std::ofstream arquivoResultados("resultados_benchmark_final_detalhado.csv");
+    // Novo cabeçalho do CSV com as colunas extras
+    arquivoResultados << "Grafo,Representacao,Algoritmo,Vertices,Arestas,NumExecucoes,TempoTotal_ms,TempoMedio_ms,TempoMin_ms,TempoMax_ms,DesvioPadrao_ms,Status\n";
+
+    // Define o plano de execução
+    std::vector<TarefaBenchmark> tarefas;
+    std::vector<std::string> grafosPequenos = { "grafo_1.txt", "grafo_2.txt" };
+    std::vector<std::string> grafosGrandes = { "grafo_3.txt", "grafo_4.txt", "grafo_5.txt", "grafo_6.txt" };
+
+    std::vector<TipoRepresentacao> todasRepr = { TipoRepresentacao::LISTA_ADJACENCIA_SIMPLES, TipoRepresentacao::LISTA_ADJACENCIA, TipoRepresentacao::MATRIZ_ADJACENCIA, TipoRepresentacao::MATRIZ_ADJACENCIA_TRIANGULAR };
+    std::vector<std::string> todosNomesRepr = { "Lista Simples", "Lista Otimizada (CSR)", "Matriz Classica", "Matriz Triangular" };
+
+    std::vector<TipoRepresentacao> reprListas = { TipoRepresentacao::LISTA_ADJACENCIA_SIMPLES, TipoRepresentacao::LISTA_ADJACENCIA };
+    std::vector<std::string> nomesReprListas = { "Lista Simples", "Lista Otimizada (CSR)" };
+
+    for (const auto& nome : grafosPequenos) {
+        for (size_t i = 0; i < todasRepr.size(); ++i) { tarefas.push_back({ nome, todasRepr[i], todosNomesRepr[i] }); }
+    }
+    for (const auto& nome : grafosGrandes) {
+        for (size_t i = 0; i < reprListas.size(); ++i) { tarefas.push_back({ nome, reprListas[i], nomesReprListas[i] }); }
+    }
+
+    std::cout << "\nIniciando benchmark completo..." << std::endl;
+
+    // Loop principal que orquestra as tarefas
+    for (const auto& tarefa : tarefas) {
+        std::cout << "\nProcessando: " << tarefa.nomeGrafo << " com " << tarefa.nomeRepr << "..." << std::endl;
+        try {
+            Grafo grafo(caminhoBase + tarefa.nomeGrafo, tarefa.tipoRepr);
+
+            // --- Executa a amostra para BFS ---
+            std::cout << "  - Executando Amostra BFS..." << std::flush;
+            ResultadoAmostra resBfs = executarAmostra(grafo, "BFS", NUM_EXECUCOES_POR_AMOSTRA);
+            std::cout << " OK (" << resBfs.tempoMedioMs << " ms/busca)" << std::endl;
+            // Escreve a linha completa de resultados para o BFS
+            arquivoResultados << tarefa.nomeGrafo << "," << tarefa.nomeRepr << ",BFS," << grafo.obterNumeroVertices() << "," << grafo.obterNumeroArestas() << "," << NUM_EXECUCOES_POR_AMOSTRA << "," << resBfs.tempoTotalMs << "," << resBfs.tempoMedioMs << "," << resBfs.tempoMinMs << "," << resBfs.tempoMaxMs << "," << resBfs.desvioPadraoMs << ",OK\n";
+
+            // --- Executa a amostra para DFS ---
+            std::cout << "  - Executando Amostra DFS..." << std::flush;
+            ResultadoAmostra resDfs = executarAmostra(grafo, "DFS", NUM_EXECUCOES_POR_AMOSTRA);
+            std::cout << " OK (" << resDfs.tempoMedioMs << " ms/busca)" << std::endl;
+            // Escreve a linha completa de resultados para o DFS
+            arquivoResultados << tarefa.nomeGrafo << "," << tarefa.nomeRepr << ",DFS," << grafo.obterNumeroVertices() << "," << grafo.obterNumeroArestas() << "," << NUM_EXECUCOES_POR_AMOSTRA << "," << resDfs.tempoTotalMs << "," << resDfs.tempoMedioMs << "," << resDfs.tempoMinMs << "," << resDfs.tempoMaxMs << "," << resDfs.desvioPadraoMs << ",OK\n";
+
+        }
+        catch (const std::exception& e) {
+            std::cerr << "  > ERRO: " << e.what() << std::endl;
+            // Escreve uma linha de falha com colunas extras para manter o CSV alinhado
+            arquivoResultados << tarefa.nomeGrafo << "," << tarefa.nomeRepr << ",BFS,-1,-1," << NUM_EXECUCOES_POR_AMOSTRA << ",-1,-1,-1,-1,-1,FALHA\n";
+            arquivoResultados << tarefa.nomeGrafo << "," << tarefa.nomeRepr << ",DFS,-1,-1," << NUM_EXECUCOES_POR_AMOSTRA << ",-1,-1,-1,-1,-1,FALHA\n";
+        }
+    }
+
+    arquivoResultados.close();
+    std::cout << "\n-------------------------------------------------------" << std::endl;
+    std::cout << "Benchmark completo! Resultados salvos em 'resultados_benchmark_final_detalhado.csv'" << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
     return 0;
 }
 
 /**
- * @brief Gerencia um menu para executar os testes que respondem às perguntas 4, 5, 6 e 7.
+ * @brief Executa uma "amostra" de benchmark, medindo cada execução individualmente
+ * para calcular estatísticas detalhadas.
  */
-void executarEstudoDeCasoFinal() {
-    Grafo* grafo = nullptr;
-    std::string nomeGrafoCarregado = "";
-    int escolhaGrafo = 0;
+ResultadoAmostra executarAmostra(const Grafo& grafo, const std::string& algoritmo, int numExecucoes) {
+    ResultadoAmostra resultado;
+    if (numExecucoes == 0) return resultado;
 
-    // Bloco: Carregamento do Grafo
-    std::cout << "--- Estudo de Caso Final ---" << std::endl;
-    std::cout << "Primeiro, escolha o grafo para analisar (1-6): ";
-    std::cin >> escolhaGrafo;
-    if (escolhaGrafo < 1 || escolhaGrafo > 6) { std::cout << "Escolha invalida." << std::endl; return; }
+    BFS algoritmoBFS;
+    DFS algoritmoDFS;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, grafo.obterNumeroVertices());
 
-    try {
-        std::string caminho = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/grafo_" + std::to_string(escolhaGrafo) + ".txt";
-        nomeGrafoCarregado = "grafo_" + std::to_string(escolhaGrafo) + ".txt";
-        // Usando a representação mais eficiente para garantir que todos os grafos carreguem
-        grafo = new Grafo(caminho, TipoRepresentacao::LISTA_ADJACENCIA);
-        std::cout << "Grafo '" << nomeGrafoCarregado << "' carregado com sucesso." << std::endl;
-    }
-    catch (const std::exception& e) {
-        std::cerr << "ERRO ao carregar o grafo: " << e.what() << std::endl;
-        return;
-    }
-    pausarParaContinuar();
+    // Vetor para guardar o tempo de cada uma das execuções
+    std::vector<double> temposIndividuais;
+    temposIndividuais.reserve(numExecucoes);
 
+    // Bloco: Execução e medição individual
+    for (int k = 0; k < numExecucoes; ++k) {
+        int verticeDePartida = distrib(gen);
+        auto inicio = std::chrono::high_resolution_clock::now();
 
-    // Bloco: Menu de Perguntas
-    int escolhaPergunta = -1;
-    while (escolhaPergunta != 0) {
-        std::cout << "\n--- Analisando o grafo '" << nomeGrafoCarregado << "' ---" << std::endl;
-        std::cout << "Qual pergunta voce quer responder?" << std::endl;
-        std::cout << "4. Obter pai dos vertices {10, 20, 30} com BFS e DFS" << std::endl;
-        std::cout << "5. Obter distancia entre os pares {10,20}, {10,30}, {20,30}" << std::endl;
-        std::cout << "6. Analisar Componentes Conexas" << std::endl;
-        std::cout << "7. Calcular o Diametro" << std::endl;
-        std::cout << "0. Sair" << std::endl;
-        std::cout << "Escolha: ";
-        std::cin >> escolhaPergunta;
+        if (algoritmo == "BFS") {
+            algoritmoBFS.executar(grafo, verticeDePartida);
+        }
+        else if (algoritmo == "DFS") {
+            algoritmoDFS.executar(grafo, verticeDePartida);
+        }
 
-        switch (escolhaPergunta) {
-        case 4: { // Teste Pais BFS/DFS
-            std::cout << "\n--- Resposta da Pergunta 4 ---" << std::endl;
-            std::vector<int> origens = { 1, 2, 3 };
-            std::vector<int> alvos = { 10, 20, 30 };
-            for (int origem : origens) {
-                ResultadoBFS res_bfs = grafo->executarBFS(origem);
-                ResultadoDFS res_dfs = grafo->executarDFS(origem);
-                std::cout << "\nOrigem da busca: " << origem << std::endl;
-                for (int alvo : alvos) {
-                    std::cout << "  - Vertice " << alvo << ": Pai no BFS = " << res_bfs.pai[alvo]
-                        << ", Pai no DFS = " << res_dfs.pai[alvo] << std::endl;
-                }
-            }
-            break;
-        }
-        case 5: { // Teste Distâncias
-            std::cout << "\n--- Resposta da Pergunta 5 ---" << std::endl;
-            std::vector<std::pair<int, int>> pares = { {10, 20}, {10, 30}, {20, 30} };
-            for (const auto& par : pares) {
-                int dist = grafo->calcularDistancia(par.first, par.second);
-                std::cout << "  - Distancia (" << par.first << ", " << par.second << "): " << dist << std::endl;
-            }
-            break;
-        }
-        case 6: { // Teste Componentes Conexas
-            std::cout << "\n--- Resposta da Pergunta 6 ---" << std::endl;
-            auto componentes = grafo->encontrarComponentesConexas();
-            std::cout << "  - Numero de componentes conexas: " << componentes.size() << std::endl;
-            if (!componentes.empty()) {
-                std::cout << "  - Tamanho da MAIOR componente: " << componentes.front().tamanho << " vertices" << std::endl;
-                std::cout << "  - Tamanho da MENOR componente: " << componentes.back().tamanho << " vertices" << std::endl;
-            }
-            break;
-        }
-        case 7: { // Teste Diâmetro
-            std::cout << "\n--- Resposta da Pergunta 7 ---" << std::endl;
-            std::cout << "O calculo do diametro exato pode ser EXTREMAMENTE demorado." << std::endl;
-            std::cout << "1. Calcular Exato (lento)" << std::endl;
-            std::cout << "2. Calcular Aproximado (rapido)" << std::endl;
-            int escolhaDiametro;
-            std::cin >> escolhaDiametro;
-            if (escolhaDiametro == 1) {
-                std::cout << "Calculando diametro EXATO... (aguarde)" << std::endl;
-                int diametro = grafo->calcularDiametro();
-                std::cout << "  - O diametro exato do grafo e: " << diametro << std::endl;
-            }
-            else if (escolhaDiametro == 2) {
-                std::cout << "Calculando diametro APROXIMADO com 10 iteracoes..." << std::endl;
-                int diametroAprox = grafo->calcularDiametroAproximado(10);
-                std::cout << "  - O diametro aproximado do grafo e: " << diametroAprox << std::endl;
-            }
-            break;
-        }
-        case 0:
-            std::cout << "Encerrando..." << std::endl;
-            break;
-        default:
-            std::cout << "Opcao invalida." << std::endl;
-            break;
-        }
-        if (escolhaPergunta != 0) pausarParaContinuar();
+        auto fim = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duracao = fim - inicio;
+        temposIndividuais.push_back(duracao.count());
     }
 
-    // Libera a memória alocada para o grafo
-    delete grafo;
-}
+    // Bloco: Cálculo das estatísticas a partir dos tempos individuais
+    if (!temposIndividuais.empty()) {
+        // 1. Soma e Média
+        double somaDosTempos = std::accumulate(temposIndividuais.begin(), temposIndividuais.end(), 0.0);
+        resultado.tempoTotalMs = somaDosTempos;
+        resultado.tempoMedioMs = somaDosTempos / numExecucoes;
 
-/**
- * @brief Pausa a execução e espera o usuário pressionar Enter.
- */
-void pausarParaContinuar() {
-    std::cout << "\nPressione ENTER para voltar ao menu...";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    if (std::cin.gcount() == 0) {
-        std::cin.get();
+        // 2. Mínimo e Máximo
+        resultado.tempoMinMs = *std::min_element(temposIndividuais.begin(), temposIndividuais.end());
+        resultado.tempoMaxMs = *std::max_element(temposIndividuais.begin(), temposIndividuais.end());
+
+        // 3. Desvio Padrão
+        double somaDosDesviosQuadrados = 0.0;
+        for (double tempo : temposIndividuais) {
+            somaDosDesviosQuadrados += (tempo - resultado.tempoMedioMs) * (tempo - resultado.tempoMedioMs);
+        }
+        double variancia = somaDosDesviosQuadrados / numExecucoes;
+        resultado.desvioPadraoMs = std::sqrt(variancia);
     }
+
+    return resultado;
 }
