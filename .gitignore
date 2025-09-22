@@ -5,7 +5,7 @@
 
 # Grafos em .txt
 
-*.txt
+/TP1/estudos/grafos_em_txt
 
 # User-specific files
 *.rsuser
