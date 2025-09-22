@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trabalho Prático de Grafos - Parte 1 | Biblioteca de Grafos em C++</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490'
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.8s ease-out',
+                        'slide-in-right': 'slideInRight 0.5s ease-out',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .section-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .feature-card {
+            background: linear-gradient(145deg, rgba(51, 65, 85, 0.6), rgba(30, 41, 59, 0.8));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(6, 182, 212, 0.2), 0 10px 10px -5px rgba(6, 182, 212, 0.1);
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 4s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        th, td {
+            text-align: center;
+            padding: 1rem 0.75rem;
+        }
+
+        .table-row:hover {
+            background-color: rgba(6, 182, 212, 0.1);
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            background: linear-gradient(90deg, #06b6d4, #3b82f6);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .hero-bg {
+            background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+        }
+
+        .section-number {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .complexity-badge {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-gray-300 antialiased">
+
+    <!-- Header -->
+    <header class="bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-700/50 shadow-lg">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold gradient-text">Grafos TP</span>
+            </div>
+            <div class="hidden md:flex space-x-8 text-sm font-medium">
+                <a href="#intro" class="nav-link text-gray-300 hover:text-cyan-400 transition-colors">Introdução</a>
+                <a href="#como" class="nav-link text-gray-300 hover:text-cyan-400 transition-colors">Arquitetura</a>
+                <a href="#estudo1" class="nav-link text-gray-300 hover:text-cyan-400 transition-colors">Memória</a>
+                <a href="#estudo2e3" class="nav-link text-gray-300 hover:text-cyan-400 transition-colors">Performance</a>
+                <a href="#conclusao" class="nav-link text-gray-300 hover:text-cyan-400 transition-colors">Conclusão</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-24 relative overflow-hidden animate-fade-in">
+            <div class="hero-bg absolute inset-0 -z-10"></div>
+            <div class="relative z-10">
+                <div class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 mb-8 animate-pulse-slow">
+                    <svg class="w-4 h-4 text-cyan-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-cyan-300">Análise de Performance & Design</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black gradient-text mb-6 animate-fade-in-up">
+                    Biblioteca de Grafos em C++
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-400 mb-4 font-light animate-fade-in-up" style="animation-delay: 0.2s">
+                    Uma análise de design, performance e eficiência.
+                </p>
+                <p class="text-lg text-gray-500 font-medium animate-fade-in-up" style="animation-delay: 0.4s">
+                    Desenvolvido por: <span class="text-cyan-300">João P Andrade Jorge</span> e <span class="text-cyan-300">Ana Beatriz Nunes</span>
+                </p>
+            </div>
+        </section>
+
+        <!-- Seção 1: Introdução -->
+        <section id="intro" class="mb-20 animate-fade-in-up">
+            <div class="section-card p-10 rounded-2xl shadow-2xl">
+                <div class="flex items-center mb-8">
+                    <span class="section-number text-6xl mr-4">1.</span>
+                    <h2 class="text-4xl font-bold text-white">Introdução</h2>
+                </div>
+                <div class="h-1 w-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-8"></div>
+                
+                <div class="prose prose-lg max-w-none">
+                    <p class="text-gray-300 text-lg leading-relaxed mb-8">
+                        O objetivo central foi projetar e desenvolver uma biblioteca de grafos em C++ que fosse <span class="text-cyan-300 font-semibold">modular, reutilizável e eficiente</span>, com foco em grafos não direcionados. A biblioteca deveria não apenas representar grafos, mas também implementar um conjunto robusto de algoritmos de análise.
+                    </p>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 text-cyan-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Principais Funcionalidades Implementadas:
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Bloco 1 -->
+                    <div class="feature-card rounded-xl p-8 group">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-white">Múltiplas Representações Internas</h4>
+                        </div>
+                        <p class="text-gray-400 mb-6 font-medium">Quatro formas de armazenar o grafo, escolhendo a mais adequada ao caso.</p>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Matriz de Adjacência (Clássica)</span>
+                                    <p class="text-sm text-gray-400 mt-1 font-mono bg-slate-800/50 px-2 py-1 rounded">std::vector&lt;std::vector&lt;bool&gt;&gt;. Didática, porém O(V²) em memória.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Matriz de Adjacência (Triangular)</span>
+                                    <p class="text-sm text-gray-400 mt-1">Vetor 1D com metade da matriz, economizando ~50% de memória.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Lista de Adjacência (Simples)</span>
+                                    <p class="text-sm text-gray-400 mt-1 font-mono bg-slate-800/50 px-2 py-1 rounded">std::vector&lt;std::list&lt;int&gt;&gt;. Intuitiva e O(V+E) em memória.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-green-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Lista de Adjacência (CSR)</span>
+                                    <p class="text-sm text-gray-400 mt-1">Construção em duas fases; estrutura compacta e de alto desempenho.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Bloco 2 -->
+                    <div class="feature-card rounded-xl p-8 group">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-white">Algoritmos de Busca</h4>
+                        </div>
+                        <p class="text-gray-400 mb-6 font-medium">Implementações fundamentais para exploração do grafo.</p>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Busca em Largura (BFS)</span>
+                                    <p class="text-sm text-gray-400 mt-1">Fila (<code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">queue</code>) para explorar o grafo camada por camada.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-pink-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Busca em Profundidade (DFS)</span>
+                                    <p class="text-sm text-gray-400 mt-1">Pilha (<code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">stack</code>) para exploração profunda de um ramo e backtracking.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Bloco 3 -->
+                    <div class="feature-card rounded-xl p-8 group">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-white">Análise de Conectividade</h4>
+                        </div>
+                        <p class="text-gray-400 mb-6 font-medium">Medições estruturais do grafo baseadas em buscas.</p>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-green-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Distâncias e Componentes Conexas</span>
+                                    <p class="text-sm text-gray-400 mt-1">Cálculo via BFS para identificar alcances e agrupamentos.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Diâmetro</span>
+                                    <p class="text-sm text-gray-400 mt-1">Cálculo exato (força bruta) e versão aproximada para grafos grandes.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Bloco 4 -->
+                    <div class="feature-card rounded-xl p-8 group">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-white">Carregamento e Relatórios</h4>
+                        </div>
+                        <p class="text-gray-400 mb-6 font-medium">Entrada de dados e registro dos resultados.</p>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-orange-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Importação</span>
+                                    <p class="text-sm text-gray-400 mt-1">Leitura de grafos a partir de arquivos <code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">.txt</code>.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <span class="text-gray-200 font-semibold">Relatórios e Estudos de Caso</span>
+                                    <p class="text-sm text-gray-400 mt-1">Geração de métricas e menus iterativos para experimentos.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 2: Arquitetura e Design -->
+        <section id="como" class="mb-20 animate-fade-in-up">
+            <div class="section-card p-10 rounded-2xl shadow-2xl">
+                <div class="flex items-center mb-8">
+                    <span class="section-number text-6xl mr-4">2.</span>
+                    <h2 class="text-4xl font-bold text-white">Arquitetura e Design</h2>
+                </div>
+                <div class="h-1 w-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-8"></div>
+                
+                <p class="text-gray-300 text-lg leading-relaxed mb-8">
+                    A biblioteca foi construída sobre princípios de orientação a objetos para garantir flexibilidade e manutenibilidade, separando claramente as responsabilidades.
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-10">
+                    <div class="feature-card rounded-xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Estrutura de Classes</h3>
+                        </div>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-cyan-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <strong class="text-cyan-300">Grafo:</strong> 
+                                    <span class="text-gray-400">A interface pública (fachada) que oferece uma API intuitiva.</span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <strong class="text-cyan-300">Representação:</strong> 
+                                    <span class="text-gray-400">Interface base com 4 implementações concretas (Matrizes e Listas).</span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                <div>
+                                    <strong class="text-cyan-300">Algoritmo:</strong> 
+                                    <span class="text-gray-400">Classes especialistas (<code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">BFS</code>, <code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">DFS</code>) que contêm a lógica e são delegadas pela classe Grafo.</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card rounded-xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Organização de Pastas</h3>
+                        </div>
+                        <pre class="bg-slate-800/80 rounded-xl p-6 text-sm overflow-x-auto border border-slate-700/50">
+<span class="text-cyan-300">biblioteca/</span>
+├── <span class="text-purple-300">/interface/</span>       <span class="text-gray-500"># API Pública (Grafo.h)</span>
+├── <span class="text-blue-300">/representacao/</span>   <span class="text-gray-500"># Estruturas de Dados</span>
+└── <span class="text-green-300">/algoritmos/</span>      <span class="text-gray-500"># Lógica dos Algoritmos</span>
+
+<span class="text-orange-300">estudos/</span>
+└── <span class="text-yellow-300">/benchmark/</span>       <span class="text-gray-500"># Programas de teste</span>
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Estudo 1: Memória das representações -->
+        <section id="estudo1" class="mb-20 animate-fade-in-up">
+            <div class="section-card p-10 rounded-2xl shadow-2xl">
+                <div class="flex items-center mb-8">
+                    <span class="section-number text-6xl mr-4">3.</span>
+                    <h2 class="text-4xl font-bold text-white">Estudo de Caso 1: Consumo de Memória</h2>
+                </div>
+                <div class="h-1 w-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-8"></div>
+                
+                <p class="text-gray-300 text-lg leading-relaxed mb-8">
+                    O teste mediu a memória (em MB) necessária para carregar 6 grafos de tamanhos crescentes em cada uma das 4 representações. Os resultados confirmaram a análise de complexidade teórica.
+                </p>
+                
+                <div class="overflow-x-auto rounded-xl border border-slate-700/50 shadow-lg">
+                    <table class="w-full text-sm text-gray-300 bg-gradient-to-br from-slate-800/80 to-slate-900/80">
+                        <thead class="bg-gradient-to-r from-slate-700/80 to-slate-600/80 text-white">
+                            <tr>
+                                <th class="py-4 px-6 font-bold">Grafo</th>
+                                <th class="py-4 px-6 font-bold">Lista Otimizada (MB)</th>
+                                <th class="py-4 px-6 font-bold">Lista Simples (MB)</th>
+                                <th class="py-4 px-6 font-bold">Matriz Otimizada (MB)</th>
+                                <th class="py-4 px-6 font-bold">Matriz Simples (MB)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 px-6 font-semibold">1</td>
+                                <td class="py-4 px-6 text-emerald-400 font-bold">4</td>
+                                <td class="py-4 px-6">8</td>
+                                <td class="py-4 px-6">7</td>
+                                <td class="py-4 px-6">13</td>
+                            </tr>
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 px-6 font-semibold">2</td>
+                                <td class="py-4 px-6 text-emerald-400 font-bold">11</td>
+                                <td class="py-4 px-6">83</td>
+                                <td class="py-4 px-6">150</td>
+                                <td class="py-4 px-6">312</td>
+                            </tr>
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 px-6 font-semibold">3</td>
+                                <td class="py-4 px-6 text-emerald-400 font-bold">10</td>
+                                <td class="py-4 px-6">65</td>
+                                <td class="py-4 px-6 text-yellow-400 font-semibold">8200</td>
+                                <td class="py-4 px-6 text-red-400 font-bold">16000</td>
+                            </tr>
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 px-6 font-semibold">4</td>
+                                <td class="py-4 px-6 text-emerald-400 font-bold">69</td>
+                                <td class="py-4 px-6">521</td>
+                                <td class="py-4 px-6 text-red-500 font-bold">N/A</td>
+                                <td class="py-4 px-6 text-red-500 font-bold">N/A</td>
+                            </tr>
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 px-6 font-semibold">5</td>
+                                <td class="py-4 px-6 text-emerald-400 font-bold">127</td>
+                                <td class="py-4 px-6">1034</td>
+                                <td class="py-4 px-6 text-red-500 font-bold">N/A</td>
+                                <td class="py-4 px-6 text-red-500 font-bold">N/A</td>
+                            </tr>
+                            <tr class="table-row">
+                                <td class="py-4 px-6 font-semibold">6</td>
+                                <td class="py-4 px-6 text-emerald-400 font-bold">375</td>
+                                <td class="py-4 px-6">3082</td>
+                                <td class="py-4 px-6 text-red-500 font-bold">N/A</td>
+                                <td class="py-4 px-6 text-red-500 font-bold">N/A</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <p class="text-sm text-gray-400 flex items-center">
+                        <svg class="w-4 h-4 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        *N/A indica que não houve análise devido a limitações de memória.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 4: Estudo 2 e 3: Tempo -->
+        <section id="estudo2e3" class="mb-20 animate-fade-in-up">
+            <div class="section-card p-10 rounded-2xl shadow-2xl">
+                <div class="flex items-center mb-8">
+                    <span class="section-number text-6xl mr-4">4.</span>
+                    <h2 class="text-4xl font-bold text-white">Estudo de Caso 2 & 3: Tempo de Execução</h2>
+                </div>
+                <div class="h-1 w-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-8"></div>
+                
+                <p class="text-gray-300 text-lg leading-relaxed mb-10">
+                    Para analisar a performance, medimos o tempo médio de 100 buscas (BFS/DFS). As visualizações e tabelas abaixo destacam a superioridade da representação de Lista Otimizada (CSR).
+                </p>
+
+                <div class="mb-12">
+                    <h3 class="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center">
+                        <svg class="w-6 h-6 text-cyan-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4"></path>
+                        </svg>
+                        Análise Visual dos Resultados
+                    </h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div class="feature-card rounded-xl p-6 shadow-xl">
+                                <img src="output%20(3).png" alt="Gráfico de Barras comparando tempo de execução das representações no Grafo 2" class="rounded-lg w-full shadow-lg border border-slate-700/50">
+                            </div>
+                            <div class="bg-gradient-to-r from-slate-800/50 to-slate-700/50 p-4 rounded-lg border border-slate-700/50">
+                                <p class="text-sm text-gray-400 text-center font-semibold mb-2">Gráfico 1: Impacto da Representação (BFS, Grafo 2)</p>
+                                <p class="text-gray-300 text-sm leading-relaxed">
+                                    Este gráfico ilustra a diferença drástica de performance. As representações de <strong class="text-cyan-300">Lista</strong> são ordens de magnitude mais rápidas que as de <strong class="text-red-400">Matriz</strong>, pois acessam os vizinhos diretamente (complexidade O(grau(V))) em vez de varrer uma linha inteira (O(V)).
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div class="feature-card rounded-xl p-6 shadow-xl">
+                                <img src="output%20(4).png" alt="Gráfico de Linhas mostrando a escalabilidade das representações de lista" class="rounded-lg w-full shadow-lg border border-slate-700/50">
+                            </div>
+                            <div class="bg-gradient-to-r from-slate-800/50 to-slate-700/50 p-4 rounded-lg border border-slate-700/50">
+                                <p class="text-sm text-gray-400 text-center font-semibold mb-2">Gráfico 2: Escalabilidade das Listas (BFS)</p>
+                                <p class="text-gray-300 text-sm leading-relaxed">
+                                    Este gráfico foca nas representações que escalam. A <strong class="text-emerald-300">Lista Otimizada (CSR)</strong> demonstra uma performance consistentemente superior à Lista Simples, provando que sua estrutura de dados compacta resulta em buscas mais rápidas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700/50 pt-12">
+                    <h3 class="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center">
+                        <svg class="w-6 h-6 text-cyan-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Tabela de Speedup: Performance da Lista Otimizada (CSR)
+                    </h3>
+                    <p class="text-center text-gray-400 mb-8 max-w-2xl mx-auto">
+                        A tabela indica quantas vezes a Lista Otimizada (CSR) foi mais rápida que as outras representações.
+                    </p>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-700/50 shadow-lg">
+                        <table class="w-full text-xs text-gray-300 bg-gradient-to-br from-slate-800/80 to-slate-900/80">
+                            <thead class="bg-gradient-to-r from-slate-700/80 to-slate-600/80 text-white">
+                                <tr>
+                                    <th rowspan="2" class="py-4 px-4 font-bold border-b border-r border-slate-600/50">Grafo</th>
+                                    <th rowspan="2" class="py-4 px-4 font-bold border-b border-r border-slate-600/50">Algoritmo</th>
+                                    <th colspan="3" class="py-4 px-4 font-bold border-b border-slate-600/50">Speedup vs.</th>
+                                </tr>
+                                <tr>
+                                    <th class="py-2 px-4 border-r border-slate-600/50 font-semibold">Lista Simples</th>
+                                    <th class="py-2 px-4 border-r border-slate-600/50 font-semibold">Matriz Clássica</th>
+                                    <th class="py-2 px-4 font-semibold">Matriz Triangular</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td rowspan="2" class="py-3 px-4 font-bold border-r border-slate-700/50">Grafo 1</td>
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">BFS</td>
+                                    <td class="py-3 px-4 text-yellow-400 font-bold">7.5x</td>
+                                    <td class="py-3 px-4 text-orange-400 font-bold">97.8x</td>
+                                    <td class="py-3 px-4 text-red-400 font-bold">304.3x</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">DFS</td>
+                                    <td class="py-3 px-4 font-semibold">3.0x</td>
+                                    <td class="py-3 px-4 font-semibold">21.9x</td>
+                                    <td class="py-3 px-4 font-semibold">59.2x</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td rowspan="2" class="py-3 px-4 font-bold border-r border-slate-700/50">Grafo 2</td>
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">BFS</td>
+                                    <td class="py-3 px-4 text-yellow-400 font-bold">21.1x</td>
+                                    <td class="py-3 px-4 text-orange-400 font-bold">201.2x</td>
+                                    <td class="py-3 px-4 text-red-400 font-bold">1451.4x</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">DFS</td>
+                                    <td class="py-3 px-4 font-semibold">4.2x</td>
+                                    <td class="py-3 px-4 font-semibold">38.9x</td>
+                                    <td class="py-3 px-4 text-red-400 font-bold">248.2x</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td rowspan="2" class="py-3 px-4 font-bold border-r border-slate-700/50">Grafo 3</td>
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">BFS</td>
+                                    <td class="py-3 px-4 text-emerald-400 font-bold">4.97x</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">DFS</td>
+                                    <td class="py-3 px-4 text-emerald-400 font-bold">3.37x</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td rowspan="2" class="py-3 px-4 font-bold border-r border-slate-700/50">Grafo 4</td>
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">BFS</td>
+                                    <td class="py-3 px-4 text-emerald-400 font-bold">14.49x</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">DFS</td>
+                                    <td class="py-3 px-4 text-emerald-400 font-bold">18.23x</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td rowspan="2" class="py-3 px-4 font-bold border-r border-slate-700/50">Grafo 5</td>
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">BFS</td>
+                                    <td class="py-3 px-4 text-emerald-400 font-bold">2.78x</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td class="py-3 px-4 border-r border-slate-700/50 font-medium">DFS</td>
+                                    <td class="py-3 px-4 text-emerald-400 font-bold">2.85x</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                    <td class="py-3 px-4 text-gray-500">N/A</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700/50 pt-12 mt-12">
+                    <h3 class="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center">
+                        <svg class="w-6 h-6 text-cyan-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4"></path>
+                        </svg>
+                        Análise Adicional: Comparativo BFS vs. DFS
+                    </h3>
+                    
+                    <div class="max-w-4xl mx-auto space-y-6">
+                        <div class="feature-card rounded-xl p-6 shadow-xl">
+                            <img src="output%20(5).png" alt="Gráfico de Barras comparando tempo de execução de BFS e DFS" class="rounded-lg w-1/2 mx-auto shadow-lg border border-slate-700/50">
+                        </div>
+                        <div class="bg-gradient-to-r from-slate-800/50 to-slate-700/50 p-6 rounded-lg border border-slate-700/50">
+                            <p class="text-sm text-gray-400 text-center font-semibold mb-4">Comparação do Tempo Médio (ms) entre BFS e DFS na Lista Otimizada (CSR).</p>
+                            <p class="text-gray-300 leading-relaxed">
+                                Este gráfico compara diretamente a performance dos dois algoritmos de busca na representação mais eficiente. Observa-se que, para a maioria dos grafos, <strong class="text-cyan-300">o tempo de execução do BFS e do DFS é muito similar</strong>, como esperado pela análise de complexidade teórica (ambos são O(V+E)). As pequenas variações podem ser atribuídas a fatores como o padrão de acesso à memória (localidade de cache) e a estrutura específica de cada grafo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 5: Conclusão -->
+        <section id="conclusao" class="mb-20 animate-fade-in-up">
+            <div class="section-card p-10 rounded-2xl shadow-2xl">
+                <div class="flex items-center mb-8">
+                    <span class="section-number text-6xl mr-4">5.</span>
+                    <h2 class="text-4xl font-bold text-white">Conclusão e Justificativa de Resultados</h2>
+                </div>
+                <div class="h-1 w-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full mb-8"></div>
+                
+                <p class="text-gray-300 text-lg leading-relaxed mb-10">
+                    Os estudos de caso demonstraram de forma conclusiva os trade-offs entre as diferentes estruturas de dados. A análise de complexidade teórica, apresentada na tabela abaixo, foi validada pelos resultados práticos de memória e tempo.
+                </p>
+
+                <div class="mb-12">
+                    <h3 class="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center">
+                        <svg class="w-6 h-6 text-cyan-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Análise de Complexidade Teórica
+                    </h3>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-700/50 shadow-lg max-w-4xl mx-auto">
+                        <table class="w-full text-sm text-gray-300 bg-gradient-to-br from-slate-800/80 to-slate-900/80">
+                            <thead class="bg-gradient-to-r from-slate-700/80 to-slate-600/80 text-white">
+                                <tr>
+                                    <th class="py-4 px-6 font-bold">Operação</th>
+                                    <th class="py-4 px-6 font-bold">Matriz de Adjacência</th>
+                                    <th class="py-4 px-6 font-bold">Lista de Adjacência</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td class="py-4 px-6 font-semibold">Espaço (Memória)</td>
+                                    <td class="py-4 px-6">
+                                        <span class="complexity-badge px-3 py-2 rounded-lg font-mono text-red-400 font-bold">O(V²)</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="complexity-badge px-3 py-2 rounded-lg font-mono text-emerald-400 font-bold">O(V+E)</span>
+                                    </td>
+                                </tr>
+                                <tr class="table-row border-b border-slate-700/50">
+                                    <td class="py-4 px-6 font-semibold">Verificar Aresta (u,v)</td>
+                                    <td class="py-4 px-6">
+                                        <span class="complexity-badge px-3 py-2 rounded-lg font-mono text-emerald-400 font-bold">O(1)</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="complexity-badge px-3 py-2 rounded-lg font-mono text-yellow-400 font-bold">O(grau(V))</span>
+                                    </td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td class="py-4 px-6 font-semibold">Listar Vizinhos(u)</td>
+                                    <td class="py-4 px-6">
+                                        <span class="complexity-badge px-3 py-2 rounded-lg font-mono text-red-400 font-bold">O(V)</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="complexity-badge px-3 py-2 rounded-lg font-mono text-emerald-400 font-bold">O(grau(V))</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700/50 pt-10">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 text-cyan-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Justificativa da Performance Superior da Lista Otimizada (CSR)
+                    </h3>
+                    
+                    <p class="text-gray-300 text-lg leading-relaxed mb-8">
+                        Embora tanto a Lista Simples quanto a CSR tenham a mesma complexidade teórica (O(V+E)), os benchmarks mostraram que a implementação CSR foi consistentemente mais rápida, chegando a ser mais de 20 vezes superior. Isso se deve a dois fatores principais de baixo nível:
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 mb-8">
+                        <div class="feature-card rounded-xl p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center mr-4">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <h4 class="text-lg font-bold text-blue-300">Localidade de Cache</h4>
+                            </div>
+                            <p class="text-gray-400 text-sm leading-relaxed">
+                                A CSR armazena todos os vizinhos de um grafo em um único vetor contíguo na memória. Quando o algoritmo (BFS/DFS) precisa listar os vizinhos de um vértice, ele acessa um bloco de memória sequencial. Isso é extremamente eficiente para a CPU, pois maximiza o uso da memória cache e minimiza o tempo de espera. Em contraste, a <code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">std::vector&lt;std::list&lt;int&gt;&gt;</code> da Lista Simples armazena os vizinhos em nós de lista ligada que podem estar espalhados por toda a RAM, causando "cache misses" frequentes e tornando o acesso mais lento.
+                            </p>
+                        </div>
+                        
+                        <div class="feature-card rounded-xl p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                                    </svg>
+                                </div>
+                                <h4 class="text-lg font-bold text-green-300">Menor Overhead de Memória</h4>
+                            </div>
+                            <p class="text-gray-400 text-sm leading-relaxed">
+                                Cada elemento de uma <code class="bg-slate-800/50 px-1 py-0.5 rounded text-cyan-300">std::list</code> carrega um custo extra de memória para ponteiros (para o nó anterior e o próximo). A CSR elimina esse overhead ao usar um único vetor, tornando-a não apenas mais compacta (como visto no Estudo de Caso 1), mas também mais rápida de percorrer.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-xl p-6">
+                        <p class="text-lg font-bold text-center gradient-text">
+                            Conclui-se que para grafos esparsos, a representação de Lista de Adjacência é a escolha correta, e a implementação com a técnica CSR é superior em todos os cenários práticos devido à sua excelente otimização de acesso à memória.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 text-sm text-gray-400">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-gray-300">
+                            <path d="M12 .5C5.648.5.5 5.648.5 12c0 5.088 3.292 9.387 7.868 10.907.575.104.786-.25.786-.555 0-.274-.01-1.003-.016-1.968-3.201.696-3.876-1.542-3.876-1.542-.523-1.329-1.278-1.682-1.278-1.682-1.045-.714.08-.699.08-.699 1.155.082 1.763 1.186 1.763 1.186 1.028 1.762 2.695 1.253 3.352.959.104-.745.402-1.253.73-1.541-2.555-.29-5.238-1.278-5.238-5.687 0-1.257.449-2.285 1.186-3.09-.119-.29-.514-1.459.112-3.04 0 0 .967-.31 3.17 1.18a11.08 11.08 0 0 1 2.884-.388c.979.004 1.964.132 2.884.388 2.201-1.49 3.166-1.18 3.166-1.18.628 1.581.234 2.75.116 3.04.74.805 1.184 1.833 1.184 3.09 0 4.421-2.688 5.393-5.254 5.679.414.356.782 1.066.782 2.148 0 1.551-.014 2.803-.014 3.184 0 .308.208.664.792.552C20.21 21.383 23.5 17.084 23.5 12c0-6.352-5.148-11.5-11.5-11.5z" />
+                        </svg>
+                    </div>
+                    <a href="https://github.com/JoaoAndrade01/GrafosTP" target="_blank" class="hover:text-cyan-400 transition-colors font-medium">
+                        Acesse a biblioteca no GitHub
+                    </a>
+                </div>
+                <div class="hidden md:block w-px h-4 bg-gray-600"></div>
+                <p class="text-gray-500">© COS242 - 2025.2 - Trabalho Prático de Grafos - Parte 1</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
