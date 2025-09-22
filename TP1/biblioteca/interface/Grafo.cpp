@@ -14,6 +14,7 @@
 #include <iostream>  // Para mensagens de depuração (opcional)
 #include <vector>
 #include <random>
+#include <ostream>
 
  /**
  * @brief Construtor da classe Grafo.
@@ -374,4 +375,79 @@ std::vector<ComponenteConexa> Grafo::encontrarComponentesConexas() const {
     );
 
     return todasAsComponentes;
+}
+
+/**
+ * @brief Implementação PRINCIPAL que escreve o relatório em um fluxo genérico.
+ */
+void Grafo::gerarRelatorioCompleto(std::ostream& saida) const {
+    saida << "--- RELATORIO COMPLETO DO GRAFO ---\n\n";
+
+    // --- Bloco 1: Estatísticas Básicas ---
+    saida << "1. ESTATISTICAS BASICAS\n";
+    saida << "   - Numero de Vertices: " << this->numeroDeVertices << "\n";
+    saida << "   - Numero de Arestas: " << this->numeroDeArestas << "\n\n";
+
+    // --- Bloco 2: Estatísticas de Grau ---
+    EstatisticasGrau estatisticas = this->calcularEstatisticasGrau();
+    saida << "2. ESTATISTICAS DE GRAU\n";
+    saida << "   - Grau Minimo: " << estatisticas.grauMin << "\n";
+    saida << "   - Grau Maximo: " << estatisticas.grauMax << "\n";
+    saida << "   - Grau Medio: " << estatisticas.grauMedio << "\n";
+    saida << "   - Mediana de Grau: " << estatisticas.grauMediana << "\n\n";
+
+    // --- Bloco 3: Componentes Conexas ---
+    std::vector<ComponenteConexa> componentes = this->encontrarComponentesConexas();
+    saida << "3. COMPONENTES CONEXAS\n";
+    saida << "   - Numero total de componentes: " << componentes.size() << "\n";
+
+    for (size_t i = 0; i < componentes.size(); ++i) {
+        saida << "   - Componente " << i + 1 << " (Tamanho: " << componentes[i].tamanho << " vertices)\n";
+    }
+
+    saida << "\n--- FIM DO RELATORIO ---" << std::endl;
+}
+
+/**
+ * @brief Implementação de conveniência que salva o relatório em um arquivo.
+ * @details Abre um arquivo e chama a implementação principal passando o arquivo como fluxo.
+ */
+void Grafo::gerarRelatorioCompleto(const std::string& caminhoArquivo) const {
+    std::ofstream arquivo(caminhoArquivo);
+    if (!arquivo.is_open()) {
+        throw std::runtime_error("Nao foi possivel criar o arquivo de relatorio: " + caminhoArquivo);
+    }
+    // Chama a outra versão da função, passando o arquivo como o fluxo de saída
+    this->gerarRelatorioCompleto(arquivo);
+}
+
+// Nota: Precisamos garantir que o método calcularEstatisticasGrau exista em Grafo.cpp
+// Se ele ainda não foi movido para cá, aqui está a implementação dele:
+EstatisticasGrau Grafo::calcularEstatisticasGrau() const {
+    EstatisticasGrau est;
+    if (this->numeroDeVertices == 0) return est;
+
+    std::vector<int> graus;
+    graus.reserve(this->numeroDeVertices);
+    long long somaGraus = 0;
+
+    for (int v = 1; v <= this->numeroDeVertices; ++v) {
+        int grau = this->obterGrau(v);
+        graus.push_back(grau);
+        somaGraus += grau;
+    }
+
+    std::sort(graus.begin(), graus.end());
+    est.grauMin = graus.front();
+    est.grauMax = graus.back();
+    est.grauMedio = static_cast<double>(somaGraus) / this->numeroDeVertices;
+
+    if (this->numeroDeVertices % 2 == 1) {
+        est.grauMediana = graus[this->numeroDeVertices / 2];
+    }
+    else {
+        est.grauMediana = (graus[this->numeroDeVertices / 2 - 1] + graus[this->numeroDeVertices / 2]) / 2.0;
+    }
+
+    return est;
 }
