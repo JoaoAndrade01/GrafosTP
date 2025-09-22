@@ -143,7 +143,7 @@ void executarModoInterativo() {
 
         try {
             std::string nomeGrafo = "grafo_" + std::to_string(escolhaGrafo) + ".txt";
-            std::string caminho = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/" + nomeGrafo;
+            std::string caminho =  caminhoEstudos(nomeGrafo);
 
             std::cout << "\nCarregando " << nomeGrafo << "..." << std::endl;
             Grafo grafo(caminho, tipo);

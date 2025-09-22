@@ -28,8 +28,9 @@ void executarEstudoDeCasoFinal() {
     if (escolhaGrafo < 1 || escolhaGrafo > 6) { std::cout << "Escolha invalida." << std::endl; return; }
 
     try {
-        std::string caminho = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/grafo_" + std::to_string(escolhaGrafo) + ".txt";
         nomeGrafoCarregado = "grafo_" + std::to_string(escolhaGrafo) + ".txt";
+        
+        std::string caminho = caminhoEstudos(nomeGrafoCarregado);
         grafo = std::make_unique<Grafo>(caminho, TipoRepresentacao::LISTA_ADJACENCIA);
         std::cout << "Grafo '" << nomeGrafoCarregado << "' carregado com sucesso." << std::endl;
     }

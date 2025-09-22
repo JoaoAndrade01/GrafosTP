@@ -48,7 +48,6 @@ void executarEstudoDeCasoTempo() {
         return;
     }
 
-    std::string caminhoBase = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/";
     std::ofstream arquivoResultados("resultados_benchmark_final_detalhado.csv");
     arquivoResultados << "Grafo,Representacao,Algoritmo,Vertices,Arestas,NumExecucoes,TempoTotal_ms,TempoMedio_ms,TempoMin_ms,TempoMax_ms,DesvioPadrao_ms,Status\n";
 
@@ -74,7 +73,7 @@ void executarEstudoDeCasoTempo() {
     for (const auto& tarefa : tarefas) {
         std::cout << "\nProcessando: " << tarefa.nomeGrafo << " com " << tarefa.nomeRepr << "..." << std::endl;
         try {
-            Grafo grafo(caminhoBase + tarefa.nomeGrafo, tarefa.tipoRepr);
+            Grafo grafo(caminhoEstudos(tarefa.nomeGrafo), tarefa.tipoRepr);
 
             std::cout << "  - Executando Amostra BFS..." << std::flush;
             ResultadoAmostra resBfs = executarAmostra(grafo, "BFS", NUM_EXECUCOES_POR_AMOSTRA);

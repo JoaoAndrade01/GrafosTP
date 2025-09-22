@@ -29,7 +29,7 @@ static void executarTesteDeListas_EC1() {
     std::vector<std::string> nomesGrafos = { "grafo_1.txt", "grafo_2.txt", "grafo_3.txt", "grafo_4.txt", "grafo_5.txt", "grafo_6.txt" };
     std::cout << "\n--- Iniciando Teste de LISTAS ---" << std::endl;
     for (const auto& nomeBase : nomesGrafos) {
-        std::string caminhoCompleto = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/" + nomeBase;
+        std::string caminhoCompleto = caminhoEstudos(nomeBase);
         std::cout << "\n--- Processando: " << nomeBase << " ---" << std::endl;
         try {
             {
@@ -57,7 +57,7 @@ static void executarTesteDeMatrizes_EC1() {
     std::vector<std::string> nomesGrafos = { "grafo_1.txt", "grafo_2.txt", "grafo_3.txt", "grafo_4.txt", "grafo_5.txt", "grafo_6.txt" };
     std::cout << "\n--- Iniciando Teste de MATRIZES ---" << std::endl;
     for (const auto& nomeBase : nomesGrafos) {
-        std::string caminhoCompleto = "C:/Users/João - Dynatest/source/repos/GrafosTP/TP1/estudos/grafos_em_txt/" + nomeBase;
+        std::string caminhoCompleto = caminhoEstudos(nomeBase);
         std::cout << "\n--- Processando: " << nomeBase << " ---" << std::endl;
         try {
             {
