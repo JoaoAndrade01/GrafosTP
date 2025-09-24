@@ -18,6 +18,15 @@
             }
         },
         {
+          "name": "x64-release-o3",
+          "displayName": "x64 Release O3",
+          "inherits": "x64-release",
+          "cacheVariables": {
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /fp:fast /arch:AVX2",
+            "CMAKE_C_FLAGS_RELEASE": "/O2 /fp:fast /arch:AVX2"
+          }
+        },
+        {
             "name": "x64-debug",
             "displayName": "x64 Debug",
             "inherits": "windows-base",
@@ -76,6 +85,25 @@
                     "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
                 }
             }
+        },
+        {
+          "name": "linux-release",
+          "displayName": "Linux Release",
+          "generator": "Ninja",
+          "binaryDir": "${sourceDir}/out/build/${presetName}",
+          "installDir": "${sourceDir}/out/install/${presetName}",
+          "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_C_COMPILER": "gcc",
+            "CMAKE_CXX_COMPILER": "g++",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -march=native",
+            "CMAKE_C_FLAGS_RELEASE": "-O3 -march=native"
+          },
+          "condition": {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Linux"
+          }
         },
         {
             "name": "macos-debug",

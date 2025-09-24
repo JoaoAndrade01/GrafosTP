@@ -6,6 +6,8 @@
 # Grafos em .txt
 
 /TP1/estudos/grafos_em_txt
+/TP1/build
+/TP1/CmakeFiles
 
 # User-specific files
 *.rsuser

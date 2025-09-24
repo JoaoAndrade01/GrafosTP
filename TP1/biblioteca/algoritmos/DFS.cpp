@@ -6,6 +6,7 @@
 #include "../../biblioteca/interface/Grafo.h"
 #include <stack>   // Usaremos a pilha padrão do C++
 #include <utility> // Para std::pair
+#include <algorithm> // Para std::reverse
 
 ResultadoDFS DFS::executar(const Grafo& grafo, int verticeOrigem) const {
     // Bloco 1: Preparação (similar ao seu "Desmarcar todos os vértices")
