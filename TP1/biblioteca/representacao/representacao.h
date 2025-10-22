@@ -1,6 +1,6 @@
 #pragma once
 /**
- * @file Representacao.h
+ * @file representacao.h
  * @brief Definição da interface base abstrata para todas as representações de grafo.
  * @details Esta classe define um "contrato" que as classes concretas de representação
  * (como MatrizAdjacencia e ListaAdjacencia) devem seguir.

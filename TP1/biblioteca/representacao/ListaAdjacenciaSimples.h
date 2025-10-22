@@ -5,7 +5,7 @@
  * clássica de grafo usando um vetor de listas.
  */
 
-#include "Representacao.h"
+#include "representacao.h"
 #include <vector>
 #include <list>
 

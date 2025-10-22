@@ -5,7 +5,7 @@
  * usando o formato otimizado Compressed Sparse Row (CSR).
  */
 
-#include "Representacao.h"
+#include "representacao.h"
 #include <vector>
 #include <utility> // Para std::pair
 

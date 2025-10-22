@@ -5,7 +5,7 @@
  * de grafo usando uma matriz de adjacência triangular.
  */
 
-#include "Representacao.h"
+#include "representacao.h"
 #include <vector>
 #include <algorithm>
 

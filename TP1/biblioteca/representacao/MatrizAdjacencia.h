@@ -5,7 +5,7 @@
  * usando matriz de adjacência.
  */
 
-#include "Representacao.h" // Inclui a interface que estamos implementando
+#include "representacao.h" // Inclui a interface que estamos implementando
 #include <vector>
 
  /**
