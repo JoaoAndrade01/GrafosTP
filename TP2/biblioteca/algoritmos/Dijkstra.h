@@ -1,21 +1,46 @@
 #pragma once
+
 #include <vector>
-#include <limits>
-#include <cmath>
-#include "../representacao/representacao.h"
+#include <limits>   // Para std::numeric_limits
+#include <stdexcept> // Para std::runtime_error
+#include <queue>     // Para std::priority_queue
+#include <utility>   // Para std::pair
 
-namespace tp2 {
+// Forward declaration da nossa interface de grafo pesado
+class GrafoPesado;
 
-using Dist = double;
-inline constexpr Dist INF = std::numeric_limits<Dist>::infinity();
-
-struct DijkstraResultado {
-    std::vector<Dist> dist;  // distância mínima s->v
-    std::vector<int>  pai;   // predecessor
+/**
+ * @struct ResultadoDijkstra
+ * @brief Armazena o resultado da execução do algoritmo de Dijkstra.
+ */
+struct ResultadoDijkstra {
+    std::vector<double> dist; // dist[v] = distância mínima da origem até v
+    std::vector<int> pai;     // pai[v] = predecessor de v no caminho mínimo
 };
 
-// Implementação com vetor
-DijkstraResultado dijkstra_vector(const Representacao& G, int s);
+/**
+ * @class Dijkstra
+ * @brief Encapsula as implementações do algoritmo de Dijkstra.
+ */
+class Dijkstra {
+public:
+    /**
+     * @brief Executa o algoritmo de Dijkstra usando uma Fila de Prioridade (Heap).
+     * @details Complexidade: O(E log V) com heap binário.
+     * @param grafo O grafo ponderado (constante).
+     * @param origem O vértice inicial da busca (indexado a partir de 1).
+     * @return Um struct ResultadoDijkstra com as distâncias e predecessores.
+     * @throws std::runtime_error se o grafo contiver pesos negativos.
+     */
+    ResultadoDijkstra executarHeap(const GrafoPesado& grafo, int origem);
 
-} // namespace tp2
-
+    /**
+     * @brief Executa o algoritmo de Dijkstra usando um Vetor para busca do mínimo.
+     * @details Complexidade: O(V^2 + E) = O(V^2) em grafos densos.
+     * @param grafo O grafo ponderado (constante).
+     * @param origem O vértice inicial da busca (indexado a partir de 1).
+     * @return Um struct ResultadoDijkstra com as distâncias e predecessores.
+     * @throws std::runtime_error se o grafo contiver pesos negativos.
+     */
+    ResultadoDijkstra executarVetor(const GrafoPesado& grafo, int origem);
+};
