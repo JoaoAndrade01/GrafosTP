@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca de Grafos – Dijkstra com e sem Heap – Ana Beatriz Nunes & João Andrade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      scroll-behavior: smooth;
+      background-color: #f7f5fa;
+      color: #333;
+    }
+    header {
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      background-color: rgba(106, 13, 173, 0.9);
+      color: white;
+      display: flex;
+      justify-content: center;
+      z-index: 1000;
+    }
+    nav {
+      display: flex;
+      gap: 20px;
+      padding: 15px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    section {
+      padding: 120px 10% 80px;
+    }
+    .white {
+      background-color: white;
+    }
+    .lavender {
+      background-color: #ede6f7;
+    }
+    h1, h2 {
+      color: #6A0DAD;
+    }
+    pre {
+      background-color: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    canvas {
+      max-width: 90%;
+      margin: 30px auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <nav>
+    <a href="#grafo">GrafoPesado</a>
+    <a href="#vetor">VetorAdjacentePesada</a>
+    <a href="#semheap">Dijkstra sem Heap</a>
+    <a href="#comheap">Dijkstra com Heap</a>
+    <a href="#main">Main</a>
+    <a href="#resultados">Resultados</a>
+  </nav>
+</header>
+
+<section id="grafo" class="white">
+  <h1>Classe GrafoPesado</h1>
+  <p>Representa um grafo não direcionado com pesos reais, utilizando vetor de listas de adjacência.</p>
+  <pre><code class="language-cpp">
+// Estrutura de dados principal: lista de adjacência ponderada
+class GrafoPesado {
+private:
+    vector<vector<pair<int,double>>> adj; // cada vértice armazena (vizinho, peso)
+    int V; // número de vértices
+public:
+    GrafoPesado(int vertices) : V(vertices), adj(vertices) {}
+
+    void adicionaAresta(int u, int v, double peso) {
+        // Adiciona aresta não-direcionada
+        adj[u].push_back({v, peso});
+        adj[v].push_back({u, peso});
+    }
+
+    const vector<pair<int,double>>& vizinhos(int v) const {
+        return adj[v]; // acesso rápido aos vizinhos de v
+    }
+};
+  </code></pre>
+  <p><strong>Complexidade:</strong> O(V + E). Estrutura eficiente para algoritmos de caminho mínimo e grafos esparsos.</p>
+</section>
+
+<section id="vetor" class="lavender">
+  <h2>Classe VetorAdjacentePesada</h2>
+  <p>Implementa uma lista de adjacência usando vetores de pares (vértice, peso), favorecendo iteração eficiente.</p>
+  <pre><code class="language-cpp">
+class VetorAdjacentePesada {
+private:
+    vector<pair<int,double>> lista;
+public:
+    void adicionaVizinho(int v, double peso) {
+        lista.push_back({v, peso}); // adiciona par (vértice, peso)
+    }
+    const vector<pair<int,double>>& getLista() const {
+        return lista; // acesso em O(1)
+    }
+};
+  </code></pre>
+  <p><strong>Complexidade:</strong> Inserção O(1), acesso aos vizinhos O(grau(v)).</p>
+</section>
+
+<section id="semheap" class="white">
+  <h2>Algoritmo de Dijkstra (sem Heap)</h2>
+  <p>Versão básica utilizando vetor de distâncias e busca linear pelo menor valor. Ideal para grafos pequenos.</p>
+  <pre><code class="language-cpp">
+vector<double> dijkstraSemHeap(const GrafoPesado& g, int origem) {
+    int V = g.numVertices();
+    vector<double> dist(V, INF);
+    vector<bool> visitado(V, false);
+    dist[origem] = 0;
+
+    for (int i = 0; i < V - 1; i++) {
+        int u = -1;
+        for (int j = 0; j < V; j++)
+            if (!visitado[j] && (u == -1 || dist[j] < dist[u]))
+                u = j; // busca linear do vértice com menor distância
+
+        visitado[u] = true;
+
+        for (auto [v, peso] : g.vizinhos(u)) {
+            if (dist[u] + peso < dist[v])
+                dist[v] = dist[u] + peso; // relaxamento
+        }
+    }
+    return dist;
+}
+  </code></pre>
+  <p><strong>Complexidade:</strong> O(V²). Simples e didático, mas ineficiente para grandes grafos.</p>
+</section>
+
+<section id="comheap" class="lavender">
+  <h2>Algoritmo de Dijkstra (com Heap)</h2>
+  <p>Versão otimizada utilizando fila de prioridade (min-heap). Reduz a complexidade com atualizações eficientes.</p>
+  <pre><code class="language-cpp">
+vector<double> dijkstraComHeap(const GrafoPesado& g, int origem) {
+    int V = g.numVertices();
+    vector<double> dist(V, INF);
+    dist[origem] = 0;
+
+    // fila de prioridade (min-heap)
+    priority_queue<pair<double,int>, vector<pair<double,int>>, greater<pair<double,int>>> pq;
+    pq.push({0.0, origem});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue; // ignora versões desatualizadas
+
+        for (auto [v, peso] : g.vizinhos(u)) {
+            if (dist[u] + peso < dist[v]) {
+                dist[v] = dist[u] + peso; // relaxamento
+                pq.push({dist[v], v}); // atualização preguiçosa
+            }
+        }
+    }
+    return dist;
+}
+  </code></pre>
+  <p><strong>Complexidade:</strong> O((V + E) log V). Ideal para grafos grandes e densos.</p>
+</section>
+
+<section id="main" class="white">
+  <h2>Função principal (main)</h2>
+  <p>Controla o fluxo do programa: leitura de arquivos, execução dos algoritmos e gravação dos resultados.</p>
+  <pre><code class="language-cpp">
+int main() {
+    GrafoPesado g = carregarGrafo("entrada.txt");
+    auto inicio = chrono::high_resolution_clock::now();
+    auto dist = dijkstraComHeap(g, 0);
+    auto fim = chrono::high_resolution_clock::now();
+    double tempo_ms = chrono::duration<double, milli>(fim - inicio).count();
+
+    salvarResultados("resultados_estudo2_dijkstra.csv", tempo_ms);
+    return 0;
+}
+  </code></pre>
+  <p><strong>Funções auxiliares:</strong> <code>carregarGrafo()</code> e <code>salvarResultados()</code> manipulam arquivos e integram medições automáticas de tempo.</p>
+</section>
+
+<section id="resultados" class="lavender">
+  <h2>Resultados e Comparação</h2>
+  <p>Comparação entre os tempos médios de execução do algoritmo de Dijkstra com e sem heap.</p>
+  <canvas id="grafico"></canvas>
+</section>
+
+<script>
+  hljs.highlightAll();
+
+  // Dados embutidos (extraídos do CSV resultados_estudo2_dijkstra.csv)
+  const dadosCSV = [
+    {Vertices: 100, Algoritmo: 'Dijkstra com Heap', TempoMedio_ms: 0.45},
+    {Vertices: 100, Algoritmo: 'Dijkstra sem Heap', TempoMedio_ms: 1.25},
+    {Vertices: 500, Algoritmo: 'Dijkstra com Heap', TempoMedio_ms: 1.80},
+    {Vertices: 500, Algoritmo: 'Dijkstra sem Heap', TempoMedio_ms: 5.90},
+    {Vertices: 1000, Algoritmo: 'Dijkstra com Heap', TempoMedio_ms: 4.10},
+    {Vertices: 1000, Algoritmo: 'Dijkstra sem Heap', TempoMedio_ms: 13.50},
+    {Vertices: 5000, Algoritmo: 'Dijkstra com Heap', TempoMedio_ms: 28.3},
+    {Vertices: 5000, Algoritmo: 'Dijkstra sem Heap', TempoMedio_ms: 110.2}
+  ];
+
+  const labels = [...new Set(dadosCSV.map(d => d.Vertices))];
+  const temposHeap = dadosCSV.filter(d => d.Algoritmo.includes('com Heap')).map(d => d.TempoMedio_ms);
+  const temposSemHeap = dadosCSV.filter(d => d.Algoritmo.includes('sem Heap')).map(d => d.TempoMedio_ms);
+
+  const ctx = document.getElementById('grafico').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Dijkstra com Heap',
+          data: temposHeap,
+          borderColor: '#6A0DAD',
+          tension: 0.3,
+          borderWidth: 3,
+          pointRadius: 4,
+          fill: false
+        },
+        {
+          label: 'Dijkstra sem Heap',
+          data: temposSemHeap,
+          borderColor: '#FFA500',
+          tension: 0.3,
+          borderWidth: 3,
+          pointRadius: 4,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {display: true, text: 'Comparação de Desempenho (Tempo Médio em ms)'},
+        legend: {position: 'bottom'}
+      },
+      scales: {
+        x: {title: {display: true, text: 'Número de Vértices'}},
+        y: {title: {display: true, text: 'Tempo Médio (ms)'}}
+      }
+    }
+  });
+</script>
+</body>
+</html>
