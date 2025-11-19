@@ -16,6 +16,7 @@
 #include <cmath>     // Para std::sqrt
 #include <filesystem>// Para manipulação de caminhos
 #include <fstream>   // Para arquivos
+#include <random>    // Para geração de números aleatórios
 
  // Includes da biblioteca TP3 (ajustados para o caminho correto)
 #include "../biblioteca/interface/GrafoPesado.h"
@@ -38,6 +39,7 @@ struct MetricasTempo {
 // --- Protótipos ---
 void executarEstudoCaso1_DistanciasEspecificas();
 void executarEstudoCaso2_BenchmarkBellmanFord();
+void executarEstudoCaso3_GrafoTransposto(); // <-- NOVO
 void executarModoInterativo();
 void menuAnaliseGrafo(GrafoPesado& grafo, const std::string& nomeGrafo);
 
@@ -59,7 +61,8 @@ int main() {
         std::cout << "=======================================================\n";
         std::cout << "1. Estudo de Caso 1: Distancias (10, 20, 30 -> 100)\n";
         std::cout << "2. Estudo de Caso 2: Benchmark Bellman-Ford (Tempo)\n";
-        std::cout << "3. Modo Interativo (Carregar grafo e analisar)\n";
+        std::cout << "3. Estudo de Caso 3: Grafo Transposto (Dijkstra Heap)\n"; // <-- NOVO
+        std::cout << "4. Modo Interativo (Carregar grafo e analisar)\n";
         std::cout << "0. Sair\n";
         std::cout << "-------------------------------------------------------\n";
         std::cout << "Escolha: ";
@@ -74,7 +77,8 @@ int main() {
         switch (escolha) {
         case 1: executarEstudoCaso1_DistanciasEspecificas(); break;
         case 2: executarEstudoCaso2_BenchmarkBellmanFord(); break;
-        case 3: executarModoInterativo(); break;
+        case 3: executarEstudoCaso3_GrafoTransposto(); break; // <-- NOVO
+        case 4: executarModoInterativo(); break;
         case 0: std::cout << "Saindo...\n"; break;
         default: std::cout << "Opcao invalida.\n"; pausar(); break;
         }
@@ -106,9 +110,6 @@ void executarEstudoCaso1_DistanciasEspecificas() {
     std::vector<int> origens = { 10, 20, 30 };
     int destino = 100;
 
-    // IMPORTANTE: Como não foi especificado se os grafos do estudo são direcionados,
-    // assumiremos que são DIRECIONADOS para este TP3, ou perguntamos. 
-    // Pelo contexto de "nova funcionalidade", vamos assumir DIRECIONADO = true.
     bool ehDirecionado = true;
 
     for (const auto& nomeGrafo : grafos) {
@@ -117,8 +118,6 @@ void executarEstudoCaso1_DistanciasEspecificas() {
             std::string caminho = caminhoEstudos(nomeGrafo);
             GrafoPesado grafo(caminho, ehDirecionado);
 
-            // Bellman-Ford é usado pois é o foco do TP, mas Dijkstra também serviria se pesos >= 0.
-            // Vamos usar Bellman-Ford para garantir.
             BellmanFord bf;
 
             for (int origem : origens) {
@@ -195,7 +194,7 @@ void executarEstudoCaso2_BenchmarkBellmanFord() {
             for (int i = 0; i < NUM_RODADAS_BELLMAN; ++i) {
                 auto inicio = std::chrono::high_resolution_clock::now();
 
-                // Executa o algoritmo (sem contar tempo de I/O, pois grafo já está carregado)
+                // Executa o algoritmo
                 bf.executar(grafo, origemFixa);
 
                 auto fim = std::chrono::high_resolution_clock::now();
@@ -231,6 +230,134 @@ void executarEstudoCaso2_BenchmarkBellmanFord() {
     pausar();
 }
 
+/**
+ * @brief Estudo de Caso 3:
+ * Parte 1: Grafo Transposto, Dijkstra Heap de 100 para 10, 20, 30.
+ * Parte 2: Benchmark de tempo Dijkstra Heap Transposto (10 execuções aleatórias).
+ */
+void executarEstudoCaso3_GrafoTransposto() {
+    std::cout << "\n--- Estudo de Caso 3: Grafo Transposto e Dijkstra ---\n";
+
+    // Arquivo para Parte 1: Distâncias e Caminhos
+    std::ofstream csvDist("resultados_tp3_estudo3_distancia.csv");
+    if (!csvDist.is_open()) {
+        std::cerr << "Erro ao criar CSV de distancias.\n";
+        return;
+    }
+    csvDist << "Grafo,Origem_Transp,Destino_Transp,Distancia,Caminho\n";
+    csvDist << std::fixed << std::setprecision(4);
+
+    // Arquivo para Parte 2: Tempo de Execução
+    std::ofstream csvTempo("resultados_tp3_estudo3_tempo.csv");
+    if (!csvTempo.is_open()) {
+        std::cerr << "Erro ao criar CSV de tempo.\n";
+        return;
+    }
+    csvTempo << "Grafo,Algoritmo,NumExecucoes,TempoTotal_s,TempoMedio_s,TempoMin_s,TempoMax_s,DesvioPadrao_s\n";
+    csvTempo << std::fixed << std::setprecision(6);
+
+    // Grafos a serem analisados
+    std::vector<std::string> grafos = {
+        "grafo_W_2.txt", "grafo_W_3.txt", "grafo_W_4.txt", "grafo_W_5.txt"
+    };
+
+    // Parâmetros do estudo
+    const int origemParte1 = 100; // No grafo original é destino, no transposto vira origem
+    const std::vector<int> destinosParte1 = { 10, 20, 30 }; // No grafo original são origens, no transposto viram destinos
+    const int numExecucoesBenchmark = 10;
+
+    for (const auto& nomeGrafo : grafos) {
+        std::cout << "Processando " << nomeGrafo << " (Transposto)..." << std::endl;
+        try {
+            std::string caminho = caminhoEstudos(nomeGrafo);
+
+            // Carrega grafo: Direcionado = true, Transposto = true
+            GrafoPesado grafo(caminho, true, true);
+
+            if (grafo.temPesoNegativo()) {
+                std::cout << "  [AVISO] Grafo tem pesos negativos. Dijkstra pode falhar se houver arestas negativas alcancaveis.\n";
+            }
+
+            // --- PARTE 1: Distâncias e Caminhos ---
+            std::cout << "  [1/2] Calculando distancias de " << origemParte1 << " para {10, 20, 30}..." << std::flush;
+
+            Dijkstra dij;
+            // Executa Dijkstra a partir do 100 no grafo transposto
+            auto resultado = dij.executarHeap(grafo, origemParte1);
+
+            for (int dest : destinosParte1) {
+                if (dest > grafo.obterNumeroVertices()) {
+                    csvDist << nomeGrafo << "," << origemParte1 << "," << dest << ",N/A,Vertice Invalido\n";
+                    continue;
+                }
+
+                double dist = resultado.dist[dest];
+                std::string distStr = (dist == infinity) ? "INF" : std::to_string(dist);
+                std::string caminhoStr = "N/A";
+
+                if (dist != infinity) {
+                    // Reconstrói o caminho 100 -> ... -> Destino no grafo transposto
+                    auto caminho = reconstruirCaminho(resultado.pai, origemParte1, dest);
+                    caminhoStr = formatarCaminho(caminho);
+                }
+
+                csvDist << nomeGrafo << "," << origemParte1 << "," << dest << "," << distStr << ",\"" << caminhoStr << "\"\n";
+            }
+            std::cout << " OK.\n";
+
+
+            // --- PARTE 2: Benchmark de Tempo ---
+            std::cout << "  [2/2] Executando benchmark (" << numExecucoesBenchmark << " rodadas)..." << std::flush;
+
+            // Gerador de números aleatórios
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> distrib(1, grafo.obterNumeroVertices());
+
+            std::vector<double> tempos;
+            tempos.reserve(numExecucoesBenchmark);
+
+            for (int i = 0; i < numExecucoesBenchmark; ++i) {
+                int origemAleatoria = distrib(gen);
+
+                auto inicio = std::chrono::high_resolution_clock::now();
+                dij.executarHeap(grafo, origemAleatoria);
+                auto fim = std::chrono::high_resolution_clock::now();
+
+                std::chrono::duration<double> duracao = fim - inicio; // Segundos
+                tempos.push_back(duracao.count());
+            }
+
+            // Cálculos Estatísticos
+            double soma = std::accumulate(tempos.begin(), tempos.end(), 0.0);
+            double media = soma / numExecucoesBenchmark;
+            double min = *std::min_element(tempos.begin(), tempos.end());
+            double max = *std::max_element(tempos.begin(), tempos.end());
+
+            double somaQuad = 0.0;
+            for (double t : tempos) somaQuad += (t - media) * (t - media);
+            double desvio = (numExecucoesBenchmark > 1) ? std::sqrt(somaQuad / (numExecucoesBenchmark - 1)) : 0.0;
+
+            csvTempo << nomeGrafo << ",DijkstraHeap_Transposto," << numExecucoesBenchmark << ","
+                << soma << "," << media << "," << min << "," << max << "," << desvio << "\n";
+
+            std::cout << " OK (Media: " << media << "s)\n";
+
+        }
+        catch (const std::exception& e) {
+            std::cerr << "\n  ERRO no grafo " << nomeGrafo << ": " << e.what() << "\n";
+            // Registra erro nos CSVs
+            csvDist << nomeGrafo << ",ERROR,ERROR,ERROR," << e.what() << "\n";
+            csvTempo << nomeGrafo << ",ERROR," << numExecucoesBenchmark << ",,,,,,\n";
+        }
+    }
+
+    std::cout << "\nEstudo de Caso 3 concluido.\n";
+    std::cout << "Arquivos gerados:\n - resultados_tp3_estudo3_distancia.csv\n - resultados_tp3_estudo3_tempo.csv\n";
+    pausar();
+}
+
+
 // --- Modo Interativo ---
 
 void executarModoInterativo() {
@@ -250,12 +377,21 @@ void executarModoInterativo() {
         std::cin >> dirOpt;
         bool direcionado = (dirOpt == 1);
 
+        // Pergunta sobre transposição (Nova funcionalidade para TP3)
+        int transpOpt = 0;
+        if (direcionado) {
+            std::cout << "O grafo deve ser carregado TRANSPOSTO (invertido)? (1-Sim / 0-Nao): ";
+            std::cin >> transpOpt;
+        }
+        bool transposto = (transpOpt == 1);
+
+
         try {
-            std::cout << "Carregando " << nomeGrafo << "..." << std::endl;
+            std::cout << "Carregando " << nomeGrafo << (transposto ? " [TRANSPOSTO]" : "") << "..." << std::endl;
             std::string caminho = caminhoEstudos(nomeGrafo);
 
-            // Usa o novo construtor com parâmetro 'direcionado'
-            GrafoPesado grafo(caminho, direcionado);
+            // Usa o novo construtor com parâmetro 'direcionado' e 'transposto'
+            GrafoPesado grafo(caminho, direcionado, transposto);
 
             std::cout << "Grafo carregado com sucesso!\n";
             if (grafo.temPesoNegativo()) std::cout << "AVISO: Grafo contem pesos negativos.\n";
@@ -273,7 +409,8 @@ void executarModoInterativo() {
 void menuAnaliseGrafo(GrafoPesado& grafo, const std::string& nomeGrafo) {
     int opc = -1;
     while (opc != 0) {
-        std::cout << "\n--- Analise de " << nomeGrafo << " (" << (grafo.consultaDirecionado() ? "Direcionado" : "Nao Direcionado") << ") ---\n";
+        std::cout << "\n--- Analise de " << nomeGrafo << " (" << (grafo.consultaDirecionado() ? "Direcionado" : "Nao Direcionado")
+            << (grafo.consultaTransposto() ? ", Transposto" : "") << ") ---\n";
         std::cout << "1. Exibir Informacoes Basicas\n";
         std::cout << "2. Executar Bellman-Ford\n";
         std::cout << "3. Executar Dijkstra (Se possivel)\n";
@@ -325,7 +462,14 @@ void menuAnaliseGrafo(GrafoPesado& grafo, const std::string& nomeGrafo) {
                 // Exemplo usando Heap
                 auto res = dij.executarHeap(grafo, origem);
                 std::cout << "Dijkstra (Heap) concluido.\n";
-                // (Lógica similar de exibição...)
+
+                std::cout << "Mostrar distancia para um destino (0 para nenhum): ";
+                int dest; std::cin >> dest;
+                if (dest > 0 && dest <= grafo.obterNumeroVertices()) {
+                    std::cout << "Distancia: " << res.dist[dest] << "\n";
+                    auto caminho = reconstruirCaminho(res.pai, origem, dest);
+                    std::cout << "Caminho: " << formatarCaminho(caminho) << "\n";
+                }
             }
         }
 
