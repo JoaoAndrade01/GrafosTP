@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(TP3 LANGUAGES CXX)
 
 # Habilita Edit and Continue no MSVC (se estiver no Windows/Visual Studio)
@@ -37,13 +36,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/representacao
 )
 
-# === FONTES ESPECÍFICOS DO TP3 ===
-set(TP3_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/algoritmos/Dijkstra.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/algoritmos/BellmanFord.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/interface/GrafoDirigidoPesado.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/representacao/VetorAdjacenciaDirigidaPesada.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/estudos/main.cpp
+# Fontes (usando GLOB_RECURSE para TP3)
+file(GLOB_RECURSE TP3_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/**/*.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/estudos/*.cpp"
 )
 
 add_executable(TP3 ${TP3_SOURCES})

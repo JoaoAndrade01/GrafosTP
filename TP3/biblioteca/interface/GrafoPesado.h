@@ -84,7 +84,7 @@ public:
     /**
     * @brief Informa se o grafo foi configurado como direcionado.
     */
-    bool ehDirecionado() const;
+    bool consultaDirecionado() const;
 
     // --- Métodos para Dijkstra ---
 

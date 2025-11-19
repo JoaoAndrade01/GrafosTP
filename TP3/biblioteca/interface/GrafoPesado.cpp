@@ -100,7 +100,7 @@ bool GrafoPesado::temPesoNegativo() const {
     return this->possuiPesoNegativo;
 }
 
-bool GrafoPesado::ehDirecionado() const {
+bool GrafoPesado::consultaDirecionado() const {
     return this->ehDirecionado;
 }
 
