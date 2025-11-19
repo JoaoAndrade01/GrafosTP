@@ -42,7 +42,7 @@ void executarModoInterativo();
 void menuAnaliseGrafo(GrafoPesado& grafo, const std::string& nomeGrafo);
 
 // Auxiliares
-std::string montarCaminhoArquivo(const std::string& nomeArquivo);
+std::string caminhoEstudos(const std::string& nomeArquivo);
 std::vector<int> reconstruirCaminho(const std::vector<int>& pai, int origem, int destino);
 std::string formatarCaminho(const std::vector<int>& caminho);
 void pausar();
@@ -101,7 +101,7 @@ void executarEstudoCaso1_DistanciasEspecificas() {
     arquivoCSV << std::fixed << std::setprecision(4);
 
     std::vector<std::string> grafos = {
-        "grafo_W_1.txt", "grafo_W_2.txt", "grafo_W_3.txt", "grafo_W_4.txt", "grafo_W_5.txt"
+        /*"grafo_W_1.txt",*/ "grafo_W_2.txt", "grafo_W_3.txt", "grafo_W_4.txt", "grafo_W_5.txt"
     };
     std::vector<int> origens = { 10, 20, 30 };
     int destino = 100;
@@ -114,7 +114,7 @@ void executarEstudoCaso1_DistanciasEspecificas() {
     for (const auto& nomeGrafo : grafos) {
         std::cout << "Processando " << nomeGrafo << "..." << std::endl;
         try {
-            std::string caminho = montarCaminhoArquivo(nomeGrafo);
+            std::string caminho = caminhoEstudos(nomeGrafo);
             GrafoPesado grafo(caminho, ehDirecionado);
 
             // Bellman-Ford é usado pois é o foco do TP, mas Dijkstra também serviria se pesos >= 0.
@@ -176,7 +176,7 @@ void executarEstudoCaso2_BenchmarkBellmanFord() {
     arquivoCSV << std::fixed << std::setprecision(6);
 
     std::vector<std::string> grafos = {
-        "grafo_W_1.txt", "grafo_W_2.txt", "grafo_W_3.txt", "grafo_W_4.txt", "grafo_W_5.txt"
+        /*"grafo_W_1.txt",*/ "grafo_W_2.txt", "grafo_W_3.txt", "grafo_W_4.txt", "grafo_W_5.txt"
     };
 
     bool ehDirecionado = true; // Assumindo direcionado para o teste
@@ -185,7 +185,7 @@ void executarEstudoCaso2_BenchmarkBellmanFord() {
     for (const auto& nomeGrafo : grafos) {
         std::cout << "Benchmarking " << nomeGrafo << "..." << std::flush;
         try {
-            std::string caminho = montarCaminhoArquivo(nomeGrafo);
+            std::string caminho = caminhoEstudos(nomeGrafo);
             GrafoPesado grafo(caminho, ehDirecionado);
             BellmanFord bf;
 
@@ -252,7 +252,7 @@ void executarModoInterativo() {
 
         try {
             std::cout << "Carregando " << nomeGrafo << "..." << std::endl;
-            std::string caminho = montarCaminhoArquivo(nomeGrafo);
+            std::string caminho = caminhoEstudos(nomeGrafo);
 
             // Usa o novo construtor com parâmetro 'direcionado'
             GrafoPesado grafo(caminho, direcionado);
@@ -335,21 +335,24 @@ void menuAnaliseGrafo(GrafoPesado& grafo, const std::string& nomeGrafo) {
 
 // --- Funções Auxiliares ---
 
-std::string montarCaminhoArquivo(const std::string& nomeArquivo) {
+// --- Função Utilitária para Caminhos ---
+// Função para obter o caminho absoluto dos grafos na pasta esperada
+inline std::string caminhoEstudos(const std::string& nomeArquivo) {
     namespace fs = std::filesystem;
-    // Tenta encontrar a pasta grafos_em_txt subindo níveis se necessário
-    // (Lógica simplificada para o exemplo, ajuste conforme sua estrutura de pastas real)
-    fs::path atual = fs::current_path();
-
-    // Procura em ../grafos_em_txt ou ../../grafos_em_txt
-    if (fs::exists(atual / "grafos_em_txt" / nomeArquivo))
-        return (atual / "grafos_em_txt" / nomeArquivo).string();
-
-    if (fs::exists(atual / ".." / "grafos_em_txt" / nomeArquivo))
-        return (atual / ".." / "grafos_em_txt" / nomeArquivo).string();
-
-    // Caminho hardcoded para o TP1/estudos se necessário
-    return "../../../TP1/estudos/grafos_em_txt/" + nomeArquivo;
+    fs::path pathDoArquivoAtual(__FILE__);
+    fs::path pastaEstudos = pathDoArquivoAtual.parent_path(); // Assume que main.cpp está em estudos/
+    fs::path pastaGrafos = pastaEstudos / "grafos_em_txt"; // Ajuste se necessário
+    if (!fs::exists(pastaGrafos)) { // Tenta subir um nível se não encontrar
+        pastaEstudos = pastaEstudos.parent_path();
+        pastaGrafos = pastaEstudos / "grafos_em_txt";
+    }
+    if (!fs::exists(pastaGrafos)) {
+        std::cerr << "AVISO: Nao foi possivel encontrar a pasta 'grafos_em_txt' automaticamente." << std::endl;
+        // Tenta um caminho relativo padrão como fallback
+        return "../grafos_em_txt/" + nomeArquivo;
+    }
+    // Retorna caminho absoluto e normalizado para consistência
+    return fs::absolute(pastaGrafos / nomeArquivo).lexically_normal().string();
 }
 
 void pausar() {

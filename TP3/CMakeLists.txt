@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 project(TP3 LANGUAGES CXX)
 
 # Habilita Edit and Continue no MSVC (se estiver no Windows/Visual Studio)
+
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
-      "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,\
-      $<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,\
-      $<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
+  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
 # C++20
@@ -21,9 +19,9 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Otimizações extras só para GCC/Clang em Release (não mexe no MSVC)
-if (CMAKE_BUILD_TYPE STREQUAL "Release"
-    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  message(STATUS "Aplicando otimizacoes GCC/Clang para Release build.")
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  message(STATUS "Aplicando otimizações GCC/Clang para Release build.")
   add_compile_options(-O3 -march=native -ffast-math)
   add_link_options(-flto)
 endif()
@@ -31,9 +29,9 @@ endif()
 # Includes da biblioteca
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca
-  ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/algoritmos
   ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/interface
   ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/representacao
+  ${CMAKE_CURRENT_SOURCE_DIR}/biblioteca/algoritmos
 )
 
 # Fontes (usando GLOB_RECURSE para TP3)

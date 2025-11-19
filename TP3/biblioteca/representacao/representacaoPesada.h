@@ -74,4 +74,14 @@ public:
      * @param fn A função a ser chamada para cada vizinho 'v' com peso 'w'. Ex: [&](int v, double w){ ... }
      */
     virtual void paraCadaVizinhoComPeso(int u, const std::function<void(int v, double w)>& fn) const = 0;
+
+    // --- Adaptação do adicionarAresta sem peso ---
+    /**
+     * @brief Adiciona uma aresta assumindo peso 1.0 (para compatibilidade).
+     * @details Chama adicionarArestaComPeso internamente com peso 1.0.
+     */
+    void adicionarAresta(int u, int v) override final {
+        adicionarArestaComPeso(u, v, 1.0);
+    }
+
 };
