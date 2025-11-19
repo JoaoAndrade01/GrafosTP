@@ -12,8 +12,8 @@
  /**
   * @brief Construtor da VetorAdjacenciaPesada.
   */
-VetorAdjacenciaPesada::VetorAdjacenciaPesada(int n)
-    : numeroDeVertices(n), numeroDeArestas(0),
+VetorAdjacenciaPesada::VetorAdjacenciaPesada(int n, bool direcionado)
+    : numeroDeVertices(n), numeroDeArestas(0), ehDirecionado(direcionado),
     // Aloca N+2 para simplificar o cálculo do grau do último vértice (N)
     ponteirosInicio(n + 2, 0),
     grausTemporarios(n + 1, 0) {
@@ -40,9 +40,12 @@ void VetorAdjacenciaPesada::finalizarConstrucao() {
     this->numeroDeArestas = arestasTemporarias.size();
 
     // 1. Contagem dos graus
+	std::fill(grausTemporarios.begin(), grausTemporarios.end(), 0);
     for (const auto& aresta : arestasTemporarias) {
         grausTemporarios[aresta.u]++;
-        grausTemporarios[aresta.v]++;
+        if (!ehDirecionado) {
+            grausTemporarios[aresta.v]++;
+        }
     }
 
     // 2. Cálculo da soma de prefixos (offsets)
@@ -68,10 +71,12 @@ void VetorAdjacenciaPesada::finalizarConstrucao() {
         listaVizinhos[indiceUV] = v;
         listaPesos[indiceUV] = peso;
 
-        // Adiciona u na lista de v
-        int indiceVU = ponteirosEscrita[v]++;
-        listaVizinhos[indiceVU] = u;
-        listaPesos[indiceVU] = peso;
+		// Adiciona u na lista de v somente se for não direcionado
+        if (!ehDirecionado) {
+            int indiceVU = ponteirosEscrita[v]++;
+            listaVizinhos[indiceVU] = u;
+            listaPesos[indiceVU] = peso;
+		}
     }
 
     // 4. Ordenação (Opcional, mas útil para obterPesoAresta e consistência)
@@ -105,7 +110,8 @@ void VetorAdjacenciaPesada::finalizarConstrucao() {
 }
 
 /**
- * @brief Obtém o grau de um vértice (O(1)).
+ * @brief Obtém o grau de um vértice (O(1)). Para grafos direcionados, equivale
+ * ao grau de saída (out-degree).
  */
 int VetorAdjacenciaPesada::obterGrau(int vertice) const {
     if (vertice > 0 && vertice <= numeroDeVertices) {

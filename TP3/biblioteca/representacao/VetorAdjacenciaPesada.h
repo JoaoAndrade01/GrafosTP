@@ -1,6 +1,5 @@
 #pragma once
 
-// Muda o include para a nova interface que herda da base do TP1
 #include "representacaoPesada.h" 
 #include <vector>
 #include <utility> // Para std::pair
@@ -13,7 +12,7 @@ struct ArestaComPeso {
 
 /**
  * @class VetorAdjacenciaPesada
- * @brief Implementação CSR otimizada para grafos não direcionados COM PESOS.
+ * @brief Implementação CSR otimizada para grafos COM PESOS, direcionados ou não.
  * @details Herda de RepresentacaoPesada e implementa a lógica de armazenamento
  * compacto usando vetores para offsets, vizinhos e pesos.
  */
@@ -22,8 +21,10 @@ public:
     /**
      * @brief Construtor da classe VetorAdjacenciaPesada.
      * @param numeroDeVertices O número total de vértices que o grafo terá.
+     * @param direcionado Indica se o grafo é direcionado (false por padrão para
+     * manter compatibilidade com grafos não direcionados).
      */
-    explicit VetorAdjacenciaPesada(int numeroDeVertices);
+    explicit VetorAdjacenciaPesada(int numeroDeVertices, bool direcionado = false);
 
     /**
      * @brief Destrutor padrão.
@@ -48,6 +49,7 @@ public:
 private:
     int numeroDeVertices;
     int numeroDeArestas; // Número de arestas únicas (linhas no arquivo de entrada)
+	bool ehDirecionado;
 
     // Estrutura principal do CSR com pesos
     std::vector<int> ponteirosInicio;    // Offsets
