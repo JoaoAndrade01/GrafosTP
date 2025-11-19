@@ -30,7 +30,7 @@ public:
      * @param direcionado Indica se o grafo deve ser tratado como direcionado.
      * @throws std::runtime_error Se o arquivo não puder ser aberto ou tiver formato inválido.
      */
-    explicit GrafoPesado(const std::string& caminhoArquivo, bool direcionado = false);
+    explicit GrafoPesado(const std::string& caminhoArquivo, bool direcionado = false, bool transposto = false);
 
     /**
      * @brief Destrutor padrão. Gerencia a memória da representação interna via unique_ptr.
@@ -85,6 +85,10 @@ public:
     * @brief Informa se o grafo foi configurado como direcionado.
     */
     bool consultaDirecionado() const;
+    /**
+    * @brief Informa se o grafo foi invertido.
+    */
+    bool consultaTransposto() const;
 
     // --- Métodos para Dijkstra ---
 
@@ -113,4 +117,5 @@ private:
     long long numeroDeArestas;
     bool possuiPesoNegativo; // Cache para a verificação de peso negativo
 	bool ehDirecionado; // Indica se o grafo é direcionado
+	bool ehTransposto; // Indica se o grafo foi invertido
 };

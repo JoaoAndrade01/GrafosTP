@@ -5,16 +5,12 @@
 
 #include "VetorAdjacenciaPesada.h"
 #include <stdexcept>
-#include <algorithm> // Para std::sort, std::find_if
+#include <algorithm> 
 #include <vector>
-#include <limits>    // Para std::numeric_limits
+#include <limits>    
 
- /**
-  * @brief Construtor da VetorAdjacenciaPesada.
-  */
-VetorAdjacenciaPesada::VetorAdjacenciaPesada(int n, bool direcionado)
-    : numeroDeVertices(n), numeroDeArestas(0), ehDirecionado(direcionado),
-    // Aloca N+2 para simplificar o cálculo do grau do último vértice (N)
+VetorAdjacenciaPesada::VetorAdjacenciaPesada(int n, bool direcionado, bool transposto)
+    : numeroDeVertices(n), numeroDeArestas(0), ehDirecionado(direcionado), ehTransposto(transposto),
     ponteirosInicio(n + 2, 0),
     grausTemporarios(n + 1, 0) {
     if (n <= 0) {
@@ -22,27 +18,35 @@ VetorAdjacenciaPesada::VetorAdjacenciaPesada(int n, bool direcionado)
     }
 }
 
-/**
- * @brief Adiciona uma aresta com peso ao buffer temporário.
- */
 void VetorAdjacenciaPesada::adicionarArestaComPeso(int u, int v, double w) {
-    // Validação básica (ignora laços e vértices inválidos)
+    // Validação básica
     if (u > 0 && u <= numeroDeVertices && v > 0 && v <= numeroDeVertices && u != v) {
-        arestasTemporarias.push_back({ u, v, w });
+
+        // LÓGICA DE INVERSÃO:
+        // Se ehTransposto for true, trocamos u por v na hora de armazenar.
+        // Isso cria o grafo reverso transparente para quem usa.
+        if (ehTransposto) {
+            arestasTemporarias.push_back({ v, u, w });
+        }
+        else {
+            arestasTemporarias.push_back({ u, v, w });
+        }
         // O número total de arestas será definido em finalize
     }
 }
 
-/**
- * @brief Constrói a estrutura CSR final (offsets, vizinhos, pesos).
- */
 void VetorAdjacenciaPesada::finalizarConstrucao() {
     this->numeroDeArestas = arestasTemporarias.size();
 
     // 1. Contagem dos graus
-	std::fill(grausTemporarios.begin(), grausTemporarios.end(), 0);
+    std::fill(grausTemporarios.begin(), grausTemporarios.end(), 0); // Reset importante
     for (const auto& aresta : arestasTemporarias) {
         grausTemporarios[aresta.u]++;
+
+        // Se não for direcionado, a aresta é bidirecional, então conta para ambos.
+        // Note que se ehTransposto for true, a "aresta.u" já é o destino original,
+        // mas num grafo NÃO DIRECIONADO, transpor não muda nada estruturalmente (u-v é igual v-u).
+        // A inversão só faz sentido prático em grafos direcionados.
         if (!ehDirecionado) {
             grausTemporarios[aresta.v]++;
         }
@@ -54,33 +58,31 @@ void VetorAdjacenciaPesada::finalizarConstrucao() {
         ponteirosInicio[i + 1] = ponteirosInicio[i] + grausTemporarios[i];
     }
 
-    // 3. Alocação e Preenchimento dos vetores de vizinhos e pesos
-    // O tamanho total é 2*M (cada aresta entra duas vezes)
+    // 3. Alocação
     int tamanhoTotalVizinhos = ponteirosInicio[numeroDeVertices + 1];
     listaVizinhos.assign(tamanhoTotalVizinhos, -1);
-    listaPesos.assign(tamanhoTotalVizinhos, std::numeric_limits<double>::infinity()); // Inicializa pesos com infinito
+    listaPesos.assign(tamanhoTotalVizinhos, std::numeric_limits<double>::infinity());
 
-    std::vector<int> ponteirosEscrita = ponteirosInicio; // Cópia para usar como cursor
+    std::vector<int> ponteirosEscrita = ponteirosInicio;
     for (const auto& aresta : arestasTemporarias) {
         int u = aresta.u;
         int v = aresta.v;
         double peso = aresta.peso;
 
-        // Adiciona v na lista de u
+        // Adiciona u -> v (que pode ser v->u original se foi transposto)
         int indiceUV = ponteirosEscrita[u]++;
         listaVizinhos[indiceUV] = v;
         listaPesos[indiceUV] = peso;
 
-		// Adiciona u na lista de v somente se for não direcionado
+        // Adiciona volta se não for direcionado
         if (!ehDirecionado) {
             int indiceVU = ponteirosEscrita[v]++;
             listaVizinhos[indiceVU] = u;
             listaPesos[indiceVU] = peso;
-		}
+        }
     }
 
-    // 4. Ordenação (Opcional, mas útil para obterPesoAresta e consistência)
-    // Precisamos ordenar vizinhos e pesos juntos. Criamos pares temporários.
+    // 4. Ordenação (Opcional)
     for (int u = 1; u <= numeroDeVertices; ++u) {
         int inicio = ponteirosInicio[u];
         int fim = ponteirosInicio[u + 1];
@@ -90,10 +92,7 @@ void VetorAdjacenciaPesada::finalizarConstrucao() {
             for (int i = inicio; i < fim; ++i) {
                 vizinhosComPesos.emplace_back(listaVizinhos[i], listaPesos[i]);
             }
-
-            std::sort(vizinhosComPesos.begin(), vizinhosComPesos.end()); // Ordena por ID do vizinho
-
-            // Reescreve os vetores ordenados
+            std::sort(vizinhosComPesos.begin(), vizinhosComPesos.end());
             for (int i = 0; i < vizinhosComPesos.size(); ++i) {
                 listaVizinhos[inicio + i] = vizinhosComPesos[i].first;
                 listaPesos[inicio + i] = vizinhosComPesos[i].second;
@@ -101,8 +100,7 @@ void VetorAdjacenciaPesada::finalizarConstrucao() {
         }
     }
 
-
-    // 5. Liberação da memória temporária
+    // 5. Limpeza
     arestasTemporarias.clear();
     arestasTemporarias.shrink_to_fit();
     grausTemporarios.clear();
@@ -144,7 +142,7 @@ std::vector<VizinhoComPeso> VetorAdjacenciaPesada::obterVizinhosComPesos(int ver
     std::vector<VizinhoComPeso> resultado;
     int inicio = ponteirosInicio[vertice];
     int fim = ponteirosInicio[vertice + 1];
-    resultado.reserve(fim - inicio); // Pre-aloca memória
+    resultado.reserve(fim - inicio);
 
     for (int i = inicio; i < fim; ++i) {
         resultado.push_back({ listaVizinhos[i], listaPesos[i] });
@@ -162,7 +160,7 @@ void VetorAdjacenciaPesada::paraCadaVizinhoComPeso(int u, const std::function<vo
     int inicio = ponteirosInicio[u];
     int fim = ponteirosInicio[u + 1];
     for (int i = inicio; i < fim; ++i) {
-        fn(listaVizinhos[i], listaPesos[i]); // Chama a função lambda passada
+        fn(listaVizinhos[i], listaPesos[i]);
     }
 }
 
@@ -174,9 +172,7 @@ double VetorAdjacenciaPesada::obterPesoAresta(int u, int v) const {
     if (u <= 0 || u > numeroDeVertices || v <= 0 || v > numeroDeVertices) {
         throw std::out_of_range("Vertices invalidos ao obter peso da aresta.");
     }
-    if (u == v) {
-        return 0.0;
-    }
+    if (u == v) return 0.0;
 
     int inicio = ponteirosInicio[u];
     int fim = ponteirosInicio[u + 1];
@@ -187,7 +183,5 @@ double VetorAdjacenciaPesada::obterPesoAresta(int u, int v) const {
             return listaPesos[i];
         }
     }
-
-    // Se não encontrou, a aresta não existe
     return std::numeric_limits<double>::infinity();
 }
