@@ -14,8 +14,8 @@
  /**
   * @brief Construtor da classe GrafoPesado.
   */
-GrafoPesado::GrafoPesado(const std::string& caminhoArquivo)
-    : numeroDeVertices(0), numeroDeArestas(0), possuiPesoNegativo(false) {
+GrafoPesado::GrafoPesado(const std::string& caminhoArquivo, bool direcionado)
+    : numeroDeVertices(0), numeroDeArestas(0), possuiPesoNegativo(false), ehDirecionado(direcionado) {
 
     // Bloco: Abertura e validação do arquivo de entrada
     std::ifstream arquivo(caminhoArquivo);
@@ -31,7 +31,7 @@ GrafoPesado::GrafoPesado(const std::string& caminhoArquivo)
 
     // Bloco: Criação da representação interna (VetorAdjacenciaPesada/CSR)
     // Usamos make_unique para gerenciar a memória automaticamente.
-    representacaoInterna = std::make_unique<VetorAdjacenciaPesada>(this->numeroDeVertices);
+    representacaoInterna = std::make_unique<VetorAdjacenciaPesada>(this->numeroDeVertices, ehDirecionado);
 
     // Bloco: Leitura das arestas com pesos do arquivo
     int u, v;
@@ -99,6 +99,12 @@ double GrafoPesado::obterPesoAresta(int u, int v) const {
 bool GrafoPesado::temPesoNegativo() const {
     return this->possuiPesoNegativo;
 }
+
+bool GrafoPesado::ehDirecionado() const {
+    return this->ehDirecionado;
+}
+
+
 
 // --- Implementação dos Métodos de Dijkstra ---
 ResultadoDijkstra GrafoPesado::executarDijkstraHeap(int origem) const {

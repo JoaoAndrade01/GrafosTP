@@ -15,7 +15,7 @@ class VetorAdjacenciaPesada;
 
 /**
  * @class GrafoPesado
- * @brief Classe principal que representa um grafo NÃO DIRECIONADO COM PESOS.
+ * @brief Classe principal que representa um grafo COM PESOS, DIRECIONADO OU NÃO.
  * @details Atua como a interface pública (Fachada), escondendo a complexidade
  * da representação interna (VetorAdjacenciaPesada/CSR) e fornecendo métodos
  * para consulta e análise do grafo ponderado.
@@ -27,9 +27,10 @@ public:
      * @details Lê o arquivo no formato 'u v peso', instancia a representação
      * interna (VetorAdjacenciaPesada) e finaliza sua construção.
      * @param caminhoArquivo O caminho para o arquivo .txt.
+     * @param direcionado Indica se o grafo deve ser tratado como direcionado.
      * @throws std::runtime_error Se o arquivo não puder ser aberto ou tiver formato inválido.
      */
-    explicit GrafoPesado(const std::string& caminhoArquivo);
+    explicit GrafoPesado(const std::string& caminhoArquivo, bool direcionado = false);
 
     /**
      * @brief Destrutor padrão. Gerencia a memória da representação interna via unique_ptr.
@@ -80,6 +81,11 @@ public:
     */
     bool temPesoNegativo() const;
 
+    /**
+    * @brief Informa se o grafo foi configurado como direcionado.
+    */
+    bool ehDirecionado() const;
+
     // --- Métodos para Dijkstra ---
 
         /**
@@ -106,4 +112,5 @@ private:
     int numeroDeVertices;
     long long numeroDeArestas;
     bool possuiPesoNegativo; // Cache para a verificação de peso negativo
+	bool ehDirecionado; // Indica se o grafo é direcionado
 };
