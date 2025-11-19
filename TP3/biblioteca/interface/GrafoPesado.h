@@ -6,7 +6,7 @@
 #include <limits> // Para std::numeric_limits
 
 // Inclui a interface da representação pesada e a struct VizinhoComPeso
-#include "../representacao/representacaoPesada.h" 
+#include "../representacao/RepresentacaoPesada.h" 
 // Inclui a definição de Dijkstra e ResultadoDijkstra
 #include "../algoritmos/Dijkstra.h" 
 
@@ -100,7 +100,7 @@ public:
 
 private:
     // Ponteiro inteligente para a representação interna (sempre VetorAdjacenciaPesada por enquanto)
-    std::unique_ptr<representacaoPesada> representacaoInterna;
+    std::unique_ptr<RepresentacaoPesada> representacaoInterna;
 
     // Informações básicas cacheadas para acesso rápido
     int numeroDeVertices;
