@@ -1,138 +1,112 @@
-/**
- * @file Dijkstra.cpp
- * @brief Implementação do algoritmo de Dijkstra (versões Heap e Vetor)
- *        para grafos dirigidos com pesos (GrafoDirigidoPesado).
- */
-
 #include "Dijkstra.h"
-#include "../interface/GrafoDirigidoPesado.h"
+#include "../interface/GrafoPesado.h" // Inclui nossa classe GrafoPesado
+#include <vector>
 
-#include <queue>
-#include <limits>
-#include <stdexcept>
-#include <functional> // std::greater
-
-// Alias para infinito
-static const double INF_D = std::numeric_limits<double>::infinity();
+// Define um valor grande para representar infinito
+const double infinity = std::numeric_limits<double>::infinity();
 
 /**
- * @brief Executa Dijkstra usando fila de prioridade (heap binário).
- *
- * @param grafo  Grafo dirigido com pesos (não pode ter pesos negativos).
- * @param origem Vértice de origem (1..N).
- *
- * @return ResultadoDijkstra com vetores dist e pai preenchidos.
+ * Implementação de Dijkstra com HEAP.
  */
-ResultadoDijkstra Dijkstra::executarHeap(const GrafoDirigidoPesado& grafo, int origem) {
+ResultadoDijkstra Dijkstra::executarHeap(const GrafoPesado& grafo, int origem) {
+    // 1. Verificação de Pré-condição
     if (grafo.temPesoNegativo()) {
-        throw std::runtime_error("Dijkstra (heap) nao aceita pesos negativos.");
+        throw std::runtime_error("Algoritmo de Dijkstra nao suporta grafos com pesos negativos.");
     }
 
+    // 2. Inicialização
     const int numVertices = grafo.obterNumeroVertices();
-    if (origem < 1 || origem > numVertices) {
-        throw std::runtime_error("Vertice de origem invalido em Dijkstra (heap).");
-    }
-
     ResultadoDijkstra resultado;
-    resultado.dist.assign(numVertices + 1, INF_D);
-    resultado.pai.assign(numVertices + 1, -1);
-
-    using ParDistVert = std::pair<double, int>;
-    std::priority_queue<
-        ParDistVert,
-        std::vector<ParDistVert>,
-        std::greater<ParDistVert>
-    > fila;
+    resultado.dist.assign(numVertices + 1, infinity);
+    resultado.pai.assign(numVertices + 1, -1); // -1 indica sem predecessor
 
     resultado.dist[origem] = 0.0;
-    fila.emplace(0.0, origem);
+    resultado.pai[origem] = 0; // Marca a origem com pai 0
 
-    while (!fila.empty()) {
-        auto [distAtual, u] = fila.top();
-        fila.pop();
+    // Fila de prioridade (min-heap simulado com max-heap e pesos negativos)
+    // Armazena pares { -distancia, vertice }
+    std::priority_queue<std::pair<double, int>> pq;
+    pq.push({ 0.0, origem });
 
-        // Se já temos uma distância melhor registrada, ignorar esse par
-        if (distAtual > resultado.dist[u]) {
+    // 3. Loop Principal
+    while (!pq.empty()) {
+        double d_neg = pq.top().first; // Distância negativa
+        int u = pq.top().second;
+        pq.pop();
+
+        // Verifica se é uma entrada obsoleta na fila
+        if (-d_neg > resultado.dist[u]) {
             continue;
         }
 
-        // Para cada vizinho v de u
-        const auto vizinhos = grafo.obterVizinhosComPesos(u);
-        for (const auto& viz : vizinhos) {
-            int v       = viz.id;
-            double w_uv = viz.peso;
+        // 4. Relaxamento dos Vizinhos
+        for (const auto& vizinho : grafo.obterVizinhosComPesos(u)) {
+            int v = vizinho.id;
+            double pesoUV = vizinho.peso;
 
-            double novaDist = resultado.dist[u] + w_uv;
-            if (novaDist < resultado.dist[v]) {
-                resultado.dist[v] = novaDist;
-                resultado.pai[v]  = u;
-                fila.emplace(novaDist, v);
+            // Condição de relaxamento
+            if (resultado.dist[u] + pesoUV < resultado.dist[v]) {
+                resultado.dist[v] = resultado.dist[u] + pesoUV;
+                resultado.pai[v] = u;
+                // Adiciona a nova distância (negativa) à fila (simulando decrease-key)
+                pq.push({ -resultado.dist[v], v });
             }
         }
     }
-
     return resultado;
 }
 
+
 /**
- * @brief Executa Dijkstra usando vetor (complexidade O(V^2)).
- *
- * @param grafo  Grafo dirigido com pesos (não pode ter pesos negativos).
- * @param origem Vértice de origem (1..N).
- *
- * @return ResultadoDijkstra com vetores dist e pai preenchidos.
+ * Implementação de Dijkstra com VETOR.
  */
-ResultadoDijkstra Dijkstra::executarVetor(const GrafoDirigidoPesado& grafo, int origem) {
+ResultadoDijkstra Dijkstra::executarVetor(const GrafoPesado& grafo, int origem) {
+    // 1. Verificação de Pré-condição
     if (grafo.temPesoNegativo()) {
-        throw std::runtime_error("Dijkstra (vetor) nao aceita pesos negativos.");
+        throw std::runtime_error("Algoritmo de Dijkstra nao suporta grafos com pesos negativos.");
     }
 
+    // 2. Inicialização
     const int numVertices = grafo.obterNumeroVertices();
-    if (origem < 1 || origem > numVertices) {
-        throw std::runtime_error("Vertice de origem invalido em Dijkstra (vetor).");
-    }
-
     ResultadoDijkstra resultado;
-    resultado.dist.assign(numVertices + 1, INF_D);
+    resultado.dist.assign(numVertices + 1, infinity);
     resultado.pai.assign(numVertices + 1, -1);
+    std::vector<bool> finalizado(numVertices + 1, false); // Marca vértices cujo caminho mínimo já foi encontrado
 
-    std::vector<bool> visitado(numVertices + 1, false);
     resultado.dist[origem] = 0.0;
+    resultado.pai[origem] = 0;
 
-    // Laço principal: em cada passo escolhe o vértice não visitado
-    // com menor distância conhecida
-    for (int iter = 1; iter <= numVertices; ++iter) {
+    // 3. Loop Principal (executa V vezes)
+    for (int count = 0; count < numVertices; ++count) {
+        // 3.a. Encontrar o vértice 'u' não finalizado com menor dist[u]
+        double minDist = infinity;
         int u = -1;
-        double melhorDist = INF_D;
-
-        // Seleciona o vértice u não visitado de menor dist[u]
-        for (int v = 1; v <= numVertices; ++v) {
-            if (!visitado[v] && resultado.dist[v] < melhorDist) {
-                melhorDist = resultado.dist[v];
-                u = v;
+        for (int v_atual = 1; v_atual <= numVertices; ++v_atual) {
+            if (!finalizado[v_atual] && resultado.dist[v_atual] < minDist) {
+                minDist = resultado.dist[v_atual];
+                u = v_atual;
             }
         }
 
+        // Se não encontrou (grafo desconexo ou todos alcançáveis já finalizados)
         if (u == -1) {
-            // Não há mais vértices alcançáveis
             break;
         }
 
-        visitado[u] = true;
+        // Marca 'u' como finalizado
+        finalizado[u] = true;
 
-        // Relaxa as arestas de u
-        const auto vizinhos = grafo.obterVizinhosComPesos(u);
-        for (const auto& viz : vizinhos) {
-            int v       = viz.id;
-            double w_uv = viz.peso;
+        // 4. Relaxamento dos Vizinhos de 'u'
+        for (const auto& vizinho : grafo.obterVizinhosComPesos(u)) {
+            int v = vizinho.id;
+            double pesoUV = vizinho.peso;
 
-            double novaDist = resultado.dist[u] + w_uv;
-            if (novaDist < resultado.dist[v]) {
-                resultado.dist[v] = novaDist;
-                resultado.pai[v]  = u;
+            // Relaxa apenas se v não foi finalizado e o caminho é melhor
+            if (!finalizado[v] && resultado.dist[u] != infinity && resultado.dist[u] + pesoUV < resultado.dist[v]) {
+                resultado.dist[v] = resultado.dist[u] + pesoUV;
+                resultado.pai[v] = u;
             }
         }
     }
-
     return resultado;
 }

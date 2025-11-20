@@ -6,7 +6,7 @@
 #include <limits> // Para std::numeric_limits
 
 // Inclui a interface da representação pesada e a struct VizinhoComPeso
-#include "../representacao/representacaoPesada.h" 
+#include "../representacao/RepresentacaoPesada.h" 
 // Inclui a definição de Dijkstra e ResultadoDijkstra
 #include "../algoritmos/Dijkstra.h" 
 
@@ -15,7 +15,7 @@ class VetorAdjacenciaPesada;
 
 /**
  * @class GrafoPesado
- * @brief Classe principal que representa um grafo NÃO DIRECIONADO COM PESOS.
+ * @brief Classe principal que representa um grafo COM PESOS, DIRECIONADO OU NÃO.
  * @details Atua como a interface pública (Fachada), escondendo a complexidade
  * da representação interna (VetorAdjacenciaPesada/CSR) e fornecendo métodos
  * para consulta e análise do grafo ponderado.
@@ -27,9 +27,10 @@ public:
      * @details Lê o arquivo no formato 'u v peso', instancia a representação
      * interna (VetorAdjacenciaPesada) e finaliza sua construção.
      * @param caminhoArquivo O caminho para o arquivo .txt.
+     * @param direcionado Indica se o grafo deve ser tratado como direcionado.
      * @throws std::runtime_error Se o arquivo não puder ser aberto ou tiver formato inválido.
      */
-    explicit GrafoPesado(const std::string& caminhoArquivo);
+    explicit GrafoPesado(const std::string& caminhoArquivo, bool direcionado = false, bool transposto = false);
 
     /**
      * @brief Destrutor padrão. Gerencia a memória da representação interna via unique_ptr.
@@ -80,6 +81,15 @@ public:
     */
     bool temPesoNegativo() const;
 
+    /**
+    * @brief Informa se o grafo foi configurado como direcionado.
+    */
+    bool consultaDirecionado() const;
+    /**
+    * @brief Informa se o grafo foi invertido.
+    */
+    bool consultaTransposto() const;
+
     // --- Métodos para Dijkstra ---
 
         /**
@@ -100,10 +110,12 @@ public:
 
 private:
     // Ponteiro inteligente para a representação interna (sempre VetorAdjacenciaPesada por enquanto)
-    std::unique_ptr<representacaoPesada> representacaoInterna;
+    std::unique_ptr<RepresentacaoPesada> representacaoInterna;
 
     // Informações básicas cacheadas para acesso rápido
     int numeroDeVertices;
     long long numeroDeArestas;
     bool possuiPesoNegativo; // Cache para a verificação de peso negativo
+	bool ehDirecionado; // Indica se o grafo é direcionado
+	bool ehTransposto; // Indica se o grafo foi invertido
 };

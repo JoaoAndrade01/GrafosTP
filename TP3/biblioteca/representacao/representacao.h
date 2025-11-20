@@ -14,14 +14,14 @@
   * @details Funciona como uma interface que define as operações essenciais que
   * a classe Grafo espera que qualquer representação interna possa executar.
   */
-class representacao {
+class Representacao {
 public:
     /**
      * @brief Destrutor virtual padrão.
      * @details Essencial para garantir que a memória de classes derivadas seja
      * liberada corretamente quando um objeto é deletado através de um ponteiro da classe base.
      */
-    virtual ~representacao() = default;
+    virtual ~Representacao() = default;
 
     /**
      * @brief Adiciona uma aresta ao grafo. (Método virtual puro)

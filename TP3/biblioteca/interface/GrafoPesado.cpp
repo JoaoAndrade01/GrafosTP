@@ -4,18 +4,16 @@
  */
 
 #include "GrafoPesado.h"
-#include "../representacao/VetorAdjacenciaPesada.h" // Inclui a representação concreta
-#include <fstream>   // Para leitura de arquivos (ifstream)
-#include <stdexcept> // Para lançar exceções (runtime_error)
+#include "../representacao/VetorAdjacenciaPesada.h" 
+#include <fstream>   
+#include <stdexcept> 
 #include <vector>
 #include <string>
-#include <limits>    // Para std::numeric_limits
+#include <limits>    
 
- /**
-  * @brief Construtor da classe GrafoPesado.
-  */
-GrafoPesado::GrafoPesado(const std::string& caminhoArquivo)
-    : numeroDeVertices(0), numeroDeArestas(0), possuiPesoNegativo(false) {
+GrafoPesado::GrafoPesado(const std::string& caminhoArquivo, bool direcionado, bool transposto)
+    : numeroDeVertices(0), numeroDeArestas(0), possuiPesoNegativo(false),
+    ehDirecionado(direcionado), ehTransposto(transposto) {
 
     // Bloco: Abertura e validação do arquivo de entrada
     std::ifstream arquivo(caminhoArquivo);
@@ -30,10 +28,8 @@ GrafoPesado::GrafoPesado(const std::string& caminhoArquivo)
     }
 
     // Bloco: Criação da representação interna (VetorAdjacenciaPesada/CSR)
-    // Usamos make_unique para gerenciar a memória automaticamente.
-    representacaoInterna = std::make_unique<VetorAdjacenciaPesada>(this->numeroDeVertices);
+    representacaoInterna = std::make_unique<VetorAdjacenciaPesada>(this->numeroDeVertices, ehDirecionado, ehTransposto);
 
-    // Bloco: Leitura das arestas com pesos do arquivo
     int u, v;
     double peso;
     long long contadorArestasLidas = 0; // Usamos long long para segurança
@@ -56,10 +52,8 @@ GrafoPesado::GrafoPesado(const std::string& caminhoArquivo)
     }
 
     this->numeroDeArestas = contadorArestasLidas;
-
     // Bloco: Finalização da construção da representação interna (essencial para CSR)
     representacaoInterna->finalizarConstrucao();
-
     // O arquivo é fechado automaticamente quando 'arquivo' sai de escopo (RAII).
 }
 
@@ -98,6 +92,14 @@ double GrafoPesado::obterPesoAresta(int u, int v) const {
 
 bool GrafoPesado::temPesoNegativo() const {
     return this->possuiPesoNegativo;
+}
+
+bool GrafoPesado::consultaDirecionado() const {
+    return this->ehDirecionado;
+}
+
+bool GrafoPesado::consultaTransposto() const {
+    return this->ehTransposto;
 }
 
 // --- Implementação dos Métodos de Dijkstra ---

@@ -1,21 +1,21 @@
 #pragma once
 
 #include <vector>
-#include <limits>
-#include <stdexcept>
-#include <queue>
-#include <utility>
+#include <limits>   // Para std::numeric_limits
+#include <stdexcept> // Para std::runtime_error
+#include <queue>     // Para std::priority_queue
+#include <utility>   // Para std::pair
 
-// Agora o algoritmo trabalha com o GrafoDirigidoPesado do TP3
-class GrafoDirigidoPesado;
+// Forward declaration da nossa interface de grafo pesado
+class GrafoPesado;
 
 /**
  * @struct ResultadoDijkstra
  * @brief Armazena o resultado da execução do algoritmo de Dijkstra.
  */
 struct ResultadoDijkstra {
-    std::vector<double> dist;  // dist[v] = distância mínima da origem até v
-    std::vector<int>    pai;   // pai[v]  = predecessor de v no caminho mínimo
+    std::vector<double> dist; // dist[v] = distância mínima da origem até v
+    std::vector<int> pai;     // pai[v] = predecessor de v no caminho mínimo
 };
 
 /**
@@ -24,10 +24,23 @@ struct ResultadoDijkstra {
  */
 class Dijkstra {
 public:
-    // Versão com heap (priority_queue)
-    ResultadoDijkstra executarHeap(const GrafoDirigidoPesado& grafo, int origem);
+    /**
+     * @brief Executa o algoritmo de Dijkstra usando uma Fila de Prioridade (Heap).
+     * @details Complexidade: O(E log V) com heap binário.
+     * @param grafo O grafo ponderado (constante).
+     * @param origem O vértice inicial da busca (indexado a partir de 1).
+     * @return Um struct ResultadoDijkstra com as distâncias e predecessores.
+     * @throws std::runtime_error se o grafo contiver pesos negativos.
+     */
+    ResultadoDijkstra executarHeap(const GrafoPesado& grafo, int origem);
 
-    // Versão com vetor (O(V^2))
-    ResultadoDijkstra executarVetor(const GrafoDirigidoPesado& grafo, int origem);
+    /**
+     * @brief Executa o algoritmo de Dijkstra usando um Vetor para busca do mínimo.
+     * @details Complexidade: O(V^2 + E) = O(V^2) em grafos densos.
+     * @param grafo O grafo ponderado (constante).
+     * @param origem O vértice inicial da busca (indexado a partir de 1).
+     * @return Um struct ResultadoDijkstra com as distâncias e predecessores.
+     * @throws std::runtime_error se o grafo contiver pesos negativos.
+     */
+    ResultadoDijkstra executarVetor(const GrafoPesado& grafo, int origem);
 };
-
